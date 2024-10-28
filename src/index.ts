@@ -2,7 +2,6 @@ import express, { NextFunction, Request, Response } from 'express';
 import authRoutes from './routes/authRoutes.js';
 import { authenticate } from './middleware/authorization.js';
 import cors from 'cors';
-// import { createDbBase } from './dbInit.js';
 import dotenv from 'dotenv';
 import playerRoutes from './routes/playerRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
@@ -27,8 +26,6 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });
-
-// createDbBase();
 
 app.listen(port, () => {
   console.log(`App running on port ${port}`);
