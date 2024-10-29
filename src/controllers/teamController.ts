@@ -42,7 +42,6 @@ export const createTeamReq = async (req: Request<{}, {}, TeamRequestBody>, res: 
     res.status(500).send((err as Error).message as string || 'Some error has occurred');
   }
 };
-
 const createTeam = async (teamEmail: string, teamName: string, username: string, teamMembers?: string[] ): Promise<
   {
     id: string;
@@ -76,16 +75,25 @@ const createTeam = async (teamEmail: string, teamName: string, username: string,
       const createdMember = await createPlayer(member, result.rows[0].id);
       createdMember && membersCreated.push(createdMember.id);
     });
-    if (membersCreated.length !== teamMembers.length) {
-      return { error: 'Some error has occurred during player creation'};
-    }
   }
   return result.rows[0];
 };
 
 export const getAllTeamsReq = async (_req: Request, res: Response) => {
   try {
-    const query = `
+    const teams: TeamDto[] | undefined = await getAllTeams();
+    if (!teams) {
+      res.status(500).send('Some error has occurred');
+      return;
+    }
+    res.status(200).send(teams);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Some error has occurred');
+  }
+}
+const getAllTeams = async (): Promise<TeamDto[] | undefined> => {
+  const query = `
       SELECT
         t.id AS team_id,
         t.team_name,
@@ -117,14 +125,8 @@ export const getAllTeamsReq = async (_req: Request, res: Response) => {
       }
     });
 
-    const teams: TeamDto[] = Array.from(teamsMap.values());
-
-    res.status(200).send(teams);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Some error has occurred');
+    return Array.from(teamsMap.values());
   }
-}
 
 export const getTeamReq = async (req: Request, res: Response) => {
   const teamId = req.params.id;
@@ -142,7 +144,6 @@ export const getTeamReq = async (req: Request, res: Response) => {
     res.status(500).send('Some error has occurred');
   }
 };
-
 const getTeam = async (teamId: string): Promise<{
   contact_email: string,
   player_id: string,
