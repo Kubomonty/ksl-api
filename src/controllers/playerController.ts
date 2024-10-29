@@ -7,7 +7,7 @@ interface PlayerRequestBody {
   teamId?: string;
 }
 
-export const createPlayer = async (req: Request<{}, {}, PlayerRequestBody>, res: Response): Promise<void> => {
+export const createPlayerReq = async (req: Request<{}, {}, PlayerRequestBody>, res: Response): Promise<void> => {
   const { name, teamId } = req.body;
   if (!name) {
     res.status(400).send('Player name is missing in the data');
@@ -18,17 +18,26 @@ export const createPlayer = async (req: Request<{}, {}, PlayerRequestBody>, res:
   }
 
   try {
-    const query = `
-      INSERT INTO players (id, name, user_id)
-      VALUES ($1, $2, $3)
-      RETURNING id;
-    `;
-    const values = [uuidv4(), name, teamId];
-
-    const result = await pool.query(query, values);
-    res.status(201).send({ message: 'New Player created', playerId: result.rows[0].id });
+    const newPlayer = await createPlayer(name, teamId);
+    if (!newPlayer) {
+      res.status(500).send('Some error has occurred');
+      return;
+    }
+    res.status(201).send({ message: 'New Player created', playerId: newPlayer.id });
   } catch (err) {
     console.error(err);
     res.status(500).send('Some error has occurred');
   }
 };
+
+export const createPlayer = async (name: string, teamId: string): Promise<{id: string, name: string, team_id: string} | undefined> => {
+  const query = `
+    INSERT INTO players (id, name, user_id)
+    VALUES ($1, $2, $3)
+    RETURNING id;
+  `;
+  const values = [uuidv4(), name, teamId];
+
+  const result = await pool.query(query, values);
+  return result.rows[0];
+}
