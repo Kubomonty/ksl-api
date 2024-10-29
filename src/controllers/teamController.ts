@@ -110,6 +110,7 @@ const getAllTeams = async (): Promise<TeamDto[] | undefined> => {
     `;
     const result = await pool.query(query);
     const teamsMap = new Map<string, TeamDto>();
+    console.log(result.rows);
 
     result.rows.forEach(row => {
       if (!teamsMap.has(row.team_id)) {
