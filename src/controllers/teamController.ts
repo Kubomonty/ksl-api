@@ -148,13 +148,22 @@ export const getTeamReq = async (req: Request, res: Response) => {
 };
 const getTeam = async (teamId: string): Promise<TeamDto | undefined> => {
   const query = `
-      SELECT teams.id AS team_id, team_name, username, user_email as contact_email, players.id as player_id, players.name as player_name
-      FROM users AS teams
-      LEFT JOIN players
-        ON teams.id = players.team_id
-        AND players.archived_at IS NULL
-      WHERE id = $1
-        AND teams.archived_at IS NULL`;
+      SELECT
+        t.id AS team_id,
+        t.team_name,
+        t.user_email AS team_email,
+        p.id AS player_id,
+        p.name AS player_name
+      FROM users AS t
+      LEFT JOIN players AS p
+        ON t.id = p.user_id
+        AND p.archived_at IS NULL
+      LEFT JOIN roles as r
+        ON t.role_id = r.id
+      WHERE t.archived_at IS NULL
+        AND r.role = 'USER'
+        AND t.id = $1
+      ORDER BY p.name ASC`;
   const result = await pool.query(query, [teamId]);
   const team: TeamDto = {
     id: result.rows[0].team_id,
