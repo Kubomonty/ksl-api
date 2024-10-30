@@ -168,7 +168,7 @@ const getTeam = async (teamId: string): Promise<TeamDto | undefined> => {
   const team: TeamDto = {
     id: result.rows[0].team_id,
     players: [],
-    teamEmail: result.rows[0].contact_email,
+    teamEmail: result.rows[0].team_email,
     teamName: result.rows[0].team_name
   };
   result.rows.forEach(row => {
