@@ -151,7 +151,7 @@ const getTeam = async (teamId: string): Promise<TeamDto | undefined> => {
       SELECT teams.id AS team_id, team_name, username, user_email as contact_email, players.id as player_id, players.name as player_name
       FROM users AS teams
       LEFT JOIN players
-        ON users.id = players.team_id
+        ON teams.id = players.team_id
         AND players.archived_at IS NULL
       WHERE id = $1
         AND teams.archived_at IS NULL`;
