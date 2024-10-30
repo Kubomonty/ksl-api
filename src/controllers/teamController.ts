@@ -136,7 +136,7 @@ export const getTeamReq = async (req: Request, res: Response) => {
   try {
     const team = await getTeam(teamId);
 
-    if (!team || !team.team_id) {
+    if (!team || !team.id) {
       return res.status(404).send({ message: 'Team not found' });
     }
 
@@ -146,14 +146,7 @@ export const getTeamReq = async (req: Request, res: Response) => {
     res.status(500).send('Some error has occurred');
   }
 };
-const getTeam = async (teamId: string): Promise<{
-  contact_email: string,
-  player_id: string,
-  player_name: string
-  team_id: string,
-  team_name: string
-  username: string,
-} | undefined> => {
+const getTeam = async (teamId: string): Promise<TeamDto | undefined> => {
   const query = `
       SELECT teams.id AS team_id, team_name, username, user_email as contact_email, players.id as player_id, players.name as player_name
       FROM users AS teams
@@ -162,9 +155,19 @@ const getTeam = async (teamId: string): Promise<{
         AND players.archived_at IS NULL
       WHERE id = $1
         AND teams.archived_at IS NULL`;
-    const result = await pool.query(query, [teamId]);
+  const result = await pool.query(query, [teamId]);
+  const team: TeamDto = {
+    id: result.rows[0].team_id,
+    players: [],
+    teamEmail: result.rows[0].contact_email,
+    teamName: result.rows[0].team_name
+  };
+  result.rows.forEach(row => {
+    if (!row.player_id) return;
+    team.players.push({ id: row.player_id, name: row.player_name });
+  });
 
-  return result.rows[0];
+  return team;
 }
 
 export const isTeamUsernameUniqueReq = async (req: Request, res: Response) => {
