@@ -57,8 +57,8 @@ const createTeam = async (teamEmail: string, teamName: string, username: string,
   const userRoleId = userRoleIdResult.rows[0].id;
 
   const query = `
-    INSERT INTO users (id, team_name, username, user_email, role_id, is_team, archived)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO users (id, team_name, username, user_email, role_id, archived)
+    VALUES ($1, $2, $3, $4, $5, $7)
     RETURNING id;
   `;
   const values = [uuidv4(), teamName, username, teamEmail, userRoleId, true, false];
@@ -104,13 +104,14 @@ const getAllTeams = async (): Promise<TeamDto[] | undefined> => {
       LEFT JOIN players AS p
         ON t.id = p.user_id
         AND p.archived = false
+      LEFT JOIN roles as r
+        ON t.role_id = r.id
       WHERE t.archived = false
-        AND t.is_team = true
+        AND r.role = 'USER'
       ORDER BY t.team_name ASC, p.name ASC
     `;
     const result = await pool.query(query);
     const teamsMap = new Map<string, TeamDto>();
-    console.log(result.rows);
 
     result.rows.forEach(row => {
       if (!teamsMap.has(row.team_id)) {

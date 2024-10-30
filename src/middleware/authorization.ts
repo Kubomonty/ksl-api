@@ -10,7 +10,6 @@ interface AdminRequestBody {
   userEmail: string;
   password: string;
   role?: string;
-  isTeam?: boolean;
 }
 
 const UI_URL = process.env.UI_URL || 'http://localhost:3000';
@@ -37,7 +36,7 @@ export const createAdmin = async (req: Request<{}, {}, AdminRequestBody>, res: R
 
   try {
     const query = `
-      INSERT INTO users (id, username, user_email, password, role_id, is_team)
+      INSERT INTO users (id, username, user_email, password, role_id)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id;
     `;
@@ -156,7 +155,7 @@ export const login = async (username: string, password: string) => {
       throw new Error('Invalid credentials');
   }
 
-  const token = jwt.sign({ id: user.id, role: user.role_id, isTeam: user.is_team }, secret, { expiresIn: '1h' });
+  const token = jwt.sign({ id: user.id, role: user.role_id }, secret, { expiresIn: '1h' });
   return { token, id: user.id, userEmail: user.user_email, userRole: user.role, teamName: user.team_name, username: user.username };
 };
 
