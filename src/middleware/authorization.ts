@@ -143,7 +143,7 @@ export const resetPassword: RequestHandler = async (req, res) => {
 };
 
 export const login = async (username: string, password: string) => {
-  const query = 'SELECT users.*, roles.role FROM users left join roles on users.role_id = roles.id WHERE username = $1';
+  const query = 'SELECT users.*, roles.role FROM users left join roles on users.role_id = roles.id WHERE username = $1 AND archived_at IS NULL';
   const result = await pool.query(query, [username]);
 
   console.log('Query result:', result.rows);
@@ -188,6 +188,7 @@ export const authorizeAdmin: RequestHandler = async (req, res, next) => {
       ON users.id = $1
       AND users.role_id = roles.id
       AND roles.role = 'ADMIN'
+    WHERE users.archived_at IS NULL
   `
   const result = await pool.query(query, [user.id]);
   const userId = result.rows[0]?.user_id;
