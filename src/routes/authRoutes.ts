@@ -6,6 +6,7 @@ const router = Router();
 
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
+  console.log(`login attempt for ${username} at ${new Date().toISOString()}`);
   try {
       const response = await login(username, password);
       res.status(200).send({ ...response });
@@ -15,6 +16,7 @@ router.post('/login', async (req, res) => {
 });
 
 router.post('/request-password-reset', async (req, res, next) => {
+  console.log(`password reset request for ${req.body.email} at ${new Date().toISOString()}`);
   try {
       requestPasswordReset(req, res, next);
   } catch (err) {

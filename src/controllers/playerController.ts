@@ -9,6 +9,7 @@ interface PlayerRequestBody {
 
 export const createPlayerReq = async (req: Request<{}, {}, PlayerRequestBody>, res: Response): Promise<void> => {
   const { name, teamId } = req.body;
+  console.log(`Create new player attempt for ${name} at ${new Date().toISOString()}`);
   if (!name) {
     res.status(400).send('Player name is missing in the data');
     return;

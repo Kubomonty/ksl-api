@@ -30,6 +30,7 @@ const transporter = nodemailer.createTransport({
 
 export const createAdmin = async (req: Request<{}, {}, AdminRequestBody>, res: Response): Promise<void> => {
   const { username, userEmail } = req.body;
+  console.log(`Create new admin attempt for ${username} at ${new Date().toISOString()}`);
   const adminRoleIdQuery = 'SELECT id FROM roles WHERE role = $1';
   const adminRoleIdResult = await pool.query(adminRoleIdQuery, ['ADMIN']);
   const adminRoleId = adminRoleIdResult.rows[0].id;
@@ -76,14 +77,14 @@ export const requestPasswordCreate = async (userId: string): Promise<boolean> =>
 
   transporter.verify(function(error, success) {
     if (error) {
-      console.log('Mail Server connection error:', error)
+      console.error('Mail Server connection error:', error)
       return false
     }
   });
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.log(error);
+      console.error(error);
       return false;
     }
   });
@@ -112,7 +113,7 @@ export const requestPasswordReset: RequestHandler = async (req, res) => {
 
   transporter.verify(function(error, success) {
     if (error) {
-          console.log('Connection error:', error)
+          console.error('Connection error:', error)
     } else {
           console.log('Server is ready to take our messages');
     }
@@ -120,7 +121,7 @@ export const requestPasswordReset: RequestHandler = async (req, res) => {
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.log(error);
+      console.error(error);
       return res.status(500).send('Error sending email');
     }
     res.send('Password reset email sent');
@@ -145,8 +146,6 @@ export const resetPassword: RequestHandler = async (req, res) => {
 export const login = async (username: string, password: string) => {
   const query = 'SELECT users.*, roles.role FROM users left join roles on users.role_id = roles.id WHERE username = $1 AND archived_at IS NULL';
   const result = await pool.query(query, [username]);
-
-  console.log('Query result:', result.rows);
 
   const user = result.rows[0];
   const hashedPassword = await bcrypt.hash(password, 10);

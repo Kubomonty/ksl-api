@@ -25,7 +25,7 @@ interface TeamDto {
 
 export const createTeamReq = async (req: Request<{}, {}, TeamRequestBody>, res: Response): Promise<void> => {
   const { teamEmail, teamMembers, teamName, username } = req.body;
-
+  console.log(`Create new team attempt for team name ${teamName}, username ${username} at ${new Date().toISOString()}`);
   try {
     const createTeamResult = await createTeam(teamEmail, teamName, username, teamMembers);
     if (!createTeamResult) {
@@ -80,6 +80,7 @@ const createTeam = async (teamEmail: string, teamName: string, username: string,
 };
 
 export const getAllTeamsReq = async (_req: Request, res: Response) => {
+  console.log(`Get all teams attempt at ${new Date().toISOString()}`);
   try {
     const teams: TeamDto[] | undefined = await getAllTeams();
     if (!teams) {
@@ -132,7 +133,7 @@ const getAllTeams = async (): Promise<TeamDto[] | undefined> => {
 
 export const getTeamReq = async (req: Request, res: Response) => {
   const teamId = req.params.id;
-
+  console.log(`Get team attempt for team id ${teamId} at ${new Date().toISOString()}`);
   try {
     const team = await getTeam(teamId);
 
@@ -181,7 +182,7 @@ const getTeam = async (teamId: string): Promise<TeamDto | undefined> => {
 
 export const isTeamUsernameUniqueReq = async (req: Request, res: Response) => {
   const username = req.params.username;
-
+  console.log(`Check if team username ${username} is unique at ${new Date().toISOString()}`);
   try {
     const isUnique = await isTeamUsernameUnique(username);
 
