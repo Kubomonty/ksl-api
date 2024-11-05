@@ -38,7 +38,7 @@ export const createAdmin = async (req: Request<{}, {}, AdminRequestBody>, res: R
   try {
     const query = `
       INSERT INTO users (id, username, user_email, role_id)
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4)
       RETURNING id;
     `;
     const values = [uuidv4(), username, userEmail, adminRoleId];
