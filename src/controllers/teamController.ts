@@ -61,7 +61,7 @@ const createTeam = async (teamEmail: string, teamName: string, username: string,
     VALUES ($1, $2, $3, $4, $5)
     RETURNING id;
   `;
-  const values = [uuidv4(), teamName, username, teamEmail, userRoleId, true, false];
+  const values = [uuidv4(), teamName, username, teamEmail, userRoleId];
 
   const result = await pool.query(query, values);
   const firtsPasswordRequest = await requestPasswordCreate(result.rows[0].id);
