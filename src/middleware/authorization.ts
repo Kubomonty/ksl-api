@@ -7,8 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface AdminRequestBody {
   username: string;
-  userEmail: string;
-  password: string;
+  email: string;
   role?: string;
 }
 
@@ -29,7 +28,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const createAdmin = async (req: Request<{}, {}, AdminRequestBody>, res: Response): Promise<void> => {
-  const { username, userEmail } = req.body;
+  const { username, email } = req.body;
   console.log(`Create new admin attempt for ${username} at ${new Date().toISOString()}`);
   const adminRoleIdQuery = 'SELECT id FROM roles WHERE role = $1';
   const adminRoleIdResult = await pool.query(adminRoleIdQuery, ['ADMIN']);
@@ -41,7 +40,7 @@ export const createAdmin = async (req: Request<{}, {}, AdminRequestBody>, res: R
       VALUES ($1, $2, $3, $4)
       RETURNING id;
     `;
-    const values = [uuidv4(), username, userEmail, adminRoleId];
+    const values = [uuidv4(), username, email, adminRoleId];
 
     const result = await pool.query(query, values);
     const firtsPasswordRequest = await requestPasswordCreate(result.rows[0].id);
