@@ -37,11 +37,11 @@ export const createAdmin = async (req: Request<{}, {}, AdminRequestBody>, res: R
 
   try {
     const query = `
-      INSERT INTO users (id, username, user_email, password, role_id)
+      INSERT INTO users (id, username, user_email, role_id)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id;
     `;
-    const values = [uuidv4(), username, userEmail, adminRoleId, false];
+    const values = [uuidv4(), username, userEmail, adminRoleId];
 
     const result = await pool.query(query, values);
     const firtsPasswordRequest = await requestPasswordCreate(result.rows[0].id);
