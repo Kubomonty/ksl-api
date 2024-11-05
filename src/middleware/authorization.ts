@@ -91,9 +91,9 @@ export const requestPasswordCreate = async (userId: string): Promise<boolean> =>
 };
 
 export const requestPasswordReset: RequestHandler = async (req, res) => {
-  const { email } = req.body;
-  const query = 'SELECT * FROM users WHERE user_email = $1';
-  const result = await pool.query(query, [email]);
+  const { email, username } = req.body;
+  const query = 'SELECT * FROM users WHERE user_email = $1 AND username = $2 AND archived_at IS NULL';
+  const result = await pool.query(query, [email, username]);
   const user = result.rows[0];
 
   if (!user) {
@@ -101,13 +101,13 @@ export const requestPasswordReset: RequestHandler = async (req, res) => {
   }
 
   const resetToken = jwt.sign({ id: user.id }, emailSecret, { expiresIn: '1h' });
-  const resetLink = `http://yourdomain.com/reset-password?token=${resetToken}`;
+  const resetLink = `${UI_URL}/reset-password?token=${resetToken}`;
 
   const mailOptions = {
     from: 'kosicka.samostatna.liga@zohomail.eu',
     to: email,
-    subject: 'Password Reset',
-    text: `Click the link to reset your password: ${resetLink}`,
+    subject: `Obnovenie hesla - ${username}`,
+    text: `Kliknite na odkaz a obnovte si heslo: ${resetLink}`,
   };
 
   transporter.verify(function(error, success) {
