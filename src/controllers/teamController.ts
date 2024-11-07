@@ -23,6 +23,11 @@ interface TeamDto {
   teamEmail: string;
 }
 
+export const updateTeamReq = async (req: Request, res: Response) => {
+  const { teamEmail, teamId, teamMembers, teamName } = req.body;
+  console.log(`Update team attempt for team ${teamId} at ${new Date().toISOString()}`);
+};
+
 export const createTeamReq = async (req: Request<{}, {}, TeamRequestBody>, res: Response): Promise<void> => {
   const { teamEmail, teamMembers, teamName, username } = req.body;
   console.log(`Create new team attempt for team name ${teamName}, username ${username} at ${new Date().toISOString()}`);
