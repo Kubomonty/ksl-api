@@ -74,6 +74,7 @@ const updateTeam = async (teamEmail: string, teamId: string, teamName: string, t
     `;
     await pool.query(updateNameQuery, [teamName, teamId]);
   };
+  console.log('team', team)
   if (teamMembers?.length) {
     const newMembers = teamMembers.filter(member => member.id.startsWith('NEW-')).map(member => {
       return { id: uuidv4(), name: member.name, user_id: teamId };
