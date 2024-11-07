@@ -39,7 +39,6 @@ export const updateTeamReq = async (req: Request, res: Response) => {
   }
 };
 const updateTeam = async (teamEmail: string, teamId: string, teamName: string, teamMembers?: {id: string, name: string}[]): Promise<boolean> => {
-  console.log('updateTeam', teamEmail, teamId, teamName, teamMembers)
   const teamQuery = `
     Select u.id as team_id, u.team_name, u.user_email as team_email, p.id as player_id, p.name as player_name
     FROM users u
@@ -58,8 +57,6 @@ const updateTeam = async (teamEmail: string, teamId: string, teamName: string, t
     if (!row.player_id) return;
     team.players.push({ id: row.player_id, name: row.player_name });
   });
-  console.log('result', result.rows)
-  console.log('team', team)
   if (!team.id) return false;
   if (teamEmail !== team.teamEmail) {
     const updateEmailQuery = `
@@ -77,7 +74,6 @@ const updateTeam = async (teamEmail: string, teamId: string, teamName: string, t
     `;
     await pool.query(updateNameQuery, [teamName, teamId]);
   };
-  console.log('team', team)
   if (teamMembers?.length) {
     const newMembers = teamMembers.filter(member => member.id.startsWith('NEW-')).map(member => {
       return { id: uuidv4(), name: member.name, user_id: teamId };
