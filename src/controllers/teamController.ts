@@ -41,7 +41,7 @@ export const updateTeamReq = async (req: Request, res: Response) => {
 const updateTeam = async (teamEmail: string, teamId: string, teamName: string, teamMembers?: {id: string, name: string}[]): Promise<boolean> => {
   console.log('updateTeam', teamEmail, teamId, teamName, teamMembers)
   const teamQuery = `
-    Select *
+    Select u.id as team_id, u.team_name, u.user_email as team_email, p.id as player_id, p.name as player_name
     FROM users u
     LEFT JOIN players p
       ON u.id = p.user_id
