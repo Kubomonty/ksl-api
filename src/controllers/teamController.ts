@@ -39,6 +39,7 @@ export const updateTeamReq = async (req: Request, res: Response) => {
   }
 };
 const updateTeam = async (teamEmail: string, teamId: string, teamName: string, teamMembers?: {id: string, name: string}[]): Promise<boolean> => {
+  console.log('updateTeam', teamEmail, teamId, teamName, teamMembers)
   const teamQuery = `
     Select *
     FROM users u
