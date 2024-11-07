@@ -58,6 +58,8 @@ const updateTeam = async (teamEmail: string, teamId: string, teamName: string, t
     if (!row.player_id) return;
     team.players.push({ id: row.player_id, name: row.player_name });
   });
+  console.log('result', result.rows)
+  console.log('team', team)
   if (!team.id) return false;
   if (teamEmail !== team.teamEmail) {
     const updateEmailQuery = `
