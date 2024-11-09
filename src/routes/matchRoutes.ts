@@ -1,5 +1,5 @@
-import { authenticate } from '../middleware/authorization.js';
 import { createMatchReq, getMatchesPageReq } from '../controllers/matchController.js';
+import { authenticate } from '../middleware/authorization.js';
 import express from 'express';
 
 const router = express.Router();

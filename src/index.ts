@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import playerRoutes from './routes/playerRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
+import matchRoutes from './routes/matchRoutes.js';
 
 const port = process.env.PORT || 8080;
 dotenv.config();
@@ -16,6 +17,7 @@ app.use(express.json());
 
 app.use('/api', playerRoutes);
 app.use('/api', teamRoutes);
+app.use('/api', matchRoutes);
 app.use('/auth', authRoutes);
 
 app.use('/api/protected', authenticate, (req, res) => {
