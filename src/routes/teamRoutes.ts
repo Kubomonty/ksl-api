@@ -4,11 +4,11 @@ import express from 'express';
 
 const router = express.Router();
 
-router.get('/teams/is-unique/:username', isTeamUsernameUniqueReq);
-router.get('/teams/:id', getTeamReq);
-router.put('/teams/:id', authenticate, updateTeamReq);
-router.get('/teams', getAllTeamsReq);
-router.head('/teams', getAllTeamsReq);
-router.post('/create-team', authenticate, createTeamReq);
+router.get('/team/is-unique/:username', isTeamUsernameUniqueReq);
+router.get('/team/:id', getTeamReq);
+router.put('/team/:id', authenticate, updateTeamReq);
+router.get('/team', getAllTeamsReq);
+router.head('/team', getAllTeamsReq);
+router.post('/team', authenticate, createTeamReq);
 
 export default router;
