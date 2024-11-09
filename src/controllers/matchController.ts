@@ -88,7 +88,7 @@ const getMatchesPage = async ({ limit, offset }: { limit: number, offset: number
       home_team as homeTeam, home_captain as homeCaptain,
       home_pos1 as homePos1, home_pos2 as homePos2, home_pos3 as homePos3, home_pos4 as homePos4,
       home_pos5 as homePos5, home_pos6 as homePos6, home_pos7 as homePos7, home_pos8 as homePos8,
-      match_location as matchLocation, match_date as matchDate, status
+      match_location as matchLocation, match_date as matchDate, status, status_changed_at as statusChangedAt, status_changed_by as statusChangedBy
     FROM matches
     ORDER BY match_date DESC
     LIMIT $1 OFFSET $2;
