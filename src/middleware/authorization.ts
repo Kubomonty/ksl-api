@@ -40,7 +40,7 @@ export const createAdmin = async (req: Request<{}, {}, AdminRequestBody>, res: R
       VALUES ($1, $2, $3, $4)
       RETURNING id;
     `;
-    const values = [uuidv4(), username, email, adminRoleId];
+    const values = [uuidv4(), username.toLocaleLowerCase(), email.toLowerCase(), adminRoleId];
 
     const result = await pool.query(query, values);
     const firtsPasswordRequest = await requestPasswordCreate(result.rows[0].id);
@@ -93,7 +93,7 @@ export const requestPasswordCreate = async (userId: string): Promise<boolean> =>
 export const requestPasswordReset: RequestHandler = async (req, res) => {
   const { email, username } = req.body;
   const query = 'SELECT * FROM users WHERE user_email = $1 AND username = $2 AND archived_at IS NULL';
-  const result = await pool.query(query, [email, username]);
+  const result = await pool.query(query, [email.toLowerCase(), username.toLocaleLowerCase()]);
   const user = result.rows[0];
 
   if (!user) {
@@ -144,7 +144,7 @@ export const resetPassword: RequestHandler = async (req, res) => {
 
 export const login = async (username: string, password: string) => {
   const query = 'SELECT users.*, roles.role FROM users left join roles on users.role_id = roles.id WHERE username = $1 AND archived_at IS NULL';
-  const result = await pool.query(query, [username]);
+  const result = await pool.query(query, [username.toLocaleLowerCase()]);
 
   const user = result.rows[0];
   const hashedPassword = await bcrypt.hash(password, 10);

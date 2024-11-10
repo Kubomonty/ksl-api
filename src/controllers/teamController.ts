@@ -27,7 +27,7 @@ export const updateTeamReq = async (req: Request, res: Response) => {
   const { teamEmail, teamId, teamMembers, teamName } = req.body;
   console.log(`Update team attempt for team ${teamId} at ${new Date().toISOString()}`);
   try {
-    const updateTeamResult = await updateTeam(teamEmail, teamId, teamName, teamMembers);
+    const updateTeamResult = await updateTeam(teamEmail.toLowerCase(), teamId, teamName, teamMembers);
     if (!updateTeamResult) {
       res.status(500).send('Some error has occurred');
       return;
@@ -122,7 +122,7 @@ export const createTeamReq = async (req: Request<{}, {}, TeamRequestBody>, res: 
   const { teamEmail, teamMembers, teamName, username } = req.body;
   console.log(`Create new team attempt for team name ${teamName}, username ${username} at ${new Date().toISOString()}`);
   try {
-    const createTeamResult = await createTeam(teamEmail, teamName, username, teamMembers);
+    const createTeamResult = await createTeam(teamEmail.toLowerCase(), teamName, username.toLocaleLowerCase(), teamMembers);
     if (!createTeamResult) {
       res.status(500).send('Some error has occurred');
       return;
@@ -279,7 +279,7 @@ export const isTeamUsernameUniqueReq = async (req: Request, res: Response) => {
   const username = req.params.username;
   console.log(`Check if team username ${username} is unique at ${new Date().toISOString()}`);
   try {
-    const isUnique = await isTeamUsernameUnique(username);
+    const isUnique = await isTeamUsernameUnique(username.toLocaleLowerCase());
 
     if (isUnique) {
       return res.status(200).send({ unique: true });
