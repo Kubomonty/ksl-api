@@ -107,7 +107,7 @@ export const getMatchDetailsReq = async (req: Request, res: Response): Promise<v
 const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
   const query = `
     SELECT
-      id, guest_team, guest_captain, home_team, home_captain, match_location, match_date, created_at, status,
+      m.id, m.guest_team, m.guest_captain, m.home_team, m.home_captain, m.match_location, m.match_date, m.created_at, m.status,
       q1.guest_pos1 AS guest_pos1_q1, q1.guest_pos2 AS guest_pos2_q1, q1.guest_pos3 AS guest_pos3_q1, q1.guest_pos4 AS guest_pos4_q1,
       q1.guest_pos5 AS guest_pos5_q1, q1.guest_pos6 AS guest_pos6_q1, q1.guest_pos7 AS guest_pos7_q1, q1.guest_pos8 AS guest_pos8_q1,
       q1.home_pos1 AS home_pos1_q1, q1.home_pos2 AS home_pos2_q1, q1.home_pos3 AS home_pos3_q1, q1.home_pos4 AS home_pos4_q1,
