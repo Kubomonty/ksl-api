@@ -1,8 +1,9 @@
-import { CreateMatchRequestBody, Match } from '../modules/index.js';
+import { CreateMatchRequestBody, Match, MatchDetailsDto } from '../models/index.js';
 import { Request, Response } from 'express';
 import { MatchStatus } from '../enums/MatchStatus.enum.js';
 import pool from '../config/db.js';
 import { v4 as uuidv4 } from 'uuid';
+import { stat } from 'fs';
 
 export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody>, res: Response): Promise<void> => {
   const {
@@ -89,4 +90,178 @@ const getMatchesPage = async ({ limit, offset }: { limit: number, offset: number
 
   const result = await pool.query(query, values);
   return result.rows;
+};
+
+export const getMatchDetailsReq = async (req: Request, res: Response): Promise<void> => {
+  const matchId = req.params.matchId;
+  console.log(`Get match details for match ${matchId} at ${new Date().toISOString()}`);
+
+  try {
+    const matchDetails: MatchDetailsDto = await getMatchDetails(matchId);
+    res.status(200).send(matchDetails);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Some error has occurred');
+  }
+};
+const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
+  const query = `
+    SELECT
+      id, guest_team, guest_captain, home_team, home_captain, match_location, match_date, created_at, status,
+      q1.guest_pos1 AS guest_pos1_q1, q1.guest_pos2 AS guest_pos2_q1, q1.guest_pos3 AS guest_pos3_q1, q1.guest_pos4 AS guest_pos4_q1,
+      q1.guest_pos5 AS guest_pos5_q1, q1.guest_pos6 AS guest_pos6_q1, q1.guest_pos7 AS guest_pos7_q1, q1.guest_pos8 AS guest_pos8_q1,
+      q1.home_pos1 AS home_pos1_q1, q1.home_pos2 AS home_pos2_q1, q1.home_pos3 AS home_pos3_q1, q1.home_pos4 AS home_pos4_q1,
+      q1.home_pos5 AS home_pos5_q1, q1.home_pos6 AS home_pos6_q1, q1.home_pos7 AS home_pos7_q1, q1.home_pos8 AS home_pos8_q1,
+      q1.guest_legs AS guest_legs_q1, q1.home_legs AS home_legs_q1, q1.guest_score AS guest_score_q1, q1.home_score AS home_score_q1,
+      q2.guest_pos1 AS guest_pos1_q2, q2.guest_pos2 AS guest_pos2_q2, q2.guest_pos3 AS guest_pos3_q2, q2.guest_pos4 AS guest_pos4_q2,
+      q2.guest_pos5 AS guest_pos5_q2, q2.guest_pos6 AS guest_pos6_q2, q2.guest_pos7 AS guest_pos7_q2, q2.guest_pos8 AS guest_pos8_q2,
+      q2.home_pos1 AS home_pos1_q2, q2.home_pos2 AS home_pos2_q2, q2.home_pos3 AS home_pos3_q2, q2.home_pos4 AS home_pos4_q2,
+      q2.home_pos5 AS home_pos5_q2, q2.home_pos6 AS home_pos6_q2, q2.home_pos7 AS home_pos7_q2, q2.home_pos8 AS home_pos8_q2,
+      q2.guest_legs AS guest_legs_q2, q2.home_legs AS home_legs_q2, q2.guest_score AS guest_score_q2, q2.home_score AS home_score_q2,
+      q3.guest_pos1 AS guest_pos1_q3, q3.guest_pos2 AS guest_pos2_q3, q3.guest_pos3 AS guest_pos3_q3, q3.guest_pos4 AS guest_pos4_q3,
+      q3.guest_pos5 AS guest_pos5_q3, q3.guest_pos6 AS guest_pos6_q3, q3.guest_pos7 AS guest_pos7_q3, q3.guest_pos8 AS guest_pos8_q3,
+      q3.home_pos1 AS home_pos1_q3, q3.home_pos2 AS home_pos2_q3, q3.home_pos3 AS home_pos3_q3, q3.home_pos4 AS home_pos4_q3,
+      q3.home_pos5 AS home_pos5_q3, q3.home_pos6 AS home_pos6_q3, q3.home_pos7 AS home_pos7_q3, q3.home_pos8 AS home_pos8_q3,
+      q3.guest_legs AS guest_legs_q3, q3.home_legs AS home_legs_q3, q3.guest_score AS guest_score_q3, q3.home_score AS home_score_q3,
+      q4.guest_pos1 AS guest_pos1_q4, q4.guest_pos2 AS guest_pos2_q4, q4.guest_pos3 AS guest_pos3_q4, q4.guest_pos4 AS guest_pos4_q4,
+      q4.guest_pos5 AS guest_pos5_q4, q4.guest_pos6 AS guest_pos6_q4, q4.guest_pos7 AS guest_pos7_q4, q4.guest_pos8 AS guest_pos8_q4,
+      q4.home_pos1 AS home_pos1_q4, q4.home_pos2 AS home_pos2_q4, q4.home_pos3 AS home_pos3_q4, q4.home_pos4 AS home_pos4_q4,
+      q4.home_pos5 AS home_pos5_q4, q4.home_pos6 AS home_pos6_q4, q4.home_pos7 AS home_pos7_q4, q4.home_pos8 AS home_pos8_q4,
+      q4.guest_legs AS guest_legs_q4, q4.home_legs AS home_legs_q4, q4.guest_score AS guest_score_q4, q4.home_score AS home_score_q4
+    FROM matches AS m
+    JOIN match_details AS q1
+      ON m.id = q1.match_id
+      AND q1.quarter = 1
+    JOIN match_details AS q2
+      ON m.id = q2.match_id
+      AND q2.quarter = 2
+    JOIN match_details AS q3
+      ON m.id = q3.match_id
+      AND q3.quarter = 3
+    JOIN match_details AS q4
+      ON m.id = q4.match_id
+      AND q4.quarter = 4
+    WHERE id = $1;
+  `;
+  const values = [matchId];
+
+  const resultRows = await pool.query(query, values);
+  const result = {
+    id: resultRows.rows[0].id,
+    guestTeam: resultRows.rows[0].guest_team,
+    guestCaptain: resultRows.rows[0].guest_captain,
+    homeTeam: resultRows.rows[0].home_team,
+    homeCaptain: resultRows.rows[0].home_captain,
+    matchLocation: resultRows.rows[0].match_location,
+    matchDate: resultRows.rows[0].match_date,
+    createdAt: resultRows.rows[0].created_at,
+    status: resultRows.rows[0].status,
+    quarters: {
+      q1: {
+        guest: {
+          pos1: resultRows.rows[0].guest_pos1_q1,
+          pos2: resultRows.rows[0].guest_pos2_q1,
+          pos3: resultRows.rows[0].guest_pos3_q1,
+          pos4: resultRows.rows[0].guest_pos4_q1,
+          pos5: resultRows.rows[0].guest_pos5_q1,
+          pos6: resultRows.rows[0].guest_pos6_q1,
+          pos7: resultRows.rows[0].guest_pos7_q1,
+          pos8: resultRows.rows[0].guest_pos8_q1,
+          legs: resultRows.rows[0].guest_legs_q1,
+          score: resultRows.rows[0].guest_score_q1
+        },
+        home: {
+          pos1: resultRows.rows[0].home_pos1_q1,
+          pos2: resultRows.rows[0].home_pos2_q1,
+          pos3: resultRows.rows[0].home_pos3_q1,
+          pos4: resultRows.rows[0].home_pos4_q1,
+          pos5: resultRows.rows[0].home_pos5_q1,
+          pos6: resultRows.rows[0].home_pos6_q1,
+          pos7: resultRows.rows[0].home_pos7_q1,
+          pos8: resultRows.rows[0].home_pos8_q1,
+          legs: resultRows.rows[0].home_legs_q1,
+          score: resultRows.rows[0].home_score_q1
+        }
+      },
+      q2: {
+        guest: {
+          pos1: resultRows.rows[0].guest_pos1_q2,
+          pos2: resultRows.rows[0].guest_pos2_q2,
+          pos3: resultRows.rows[0].guest_pos3_q2,
+          pos4: resultRows.rows[0].guest_pos4_q2,
+          pos5: resultRows.rows[0].guest_pos5_q2,
+          pos6: resultRows.rows[0].guest_pos6_q2,
+          pos7: resultRows.rows[0].guest_pos7_q2,
+          pos8: resultRows.rows[0].guest_pos8_q2,
+          legs: resultRows.rows[0].guest_legs_q2,
+          score: resultRows.rows[0].guest_score_q2
+        },
+        home: {
+          pos1: resultRows.rows[0].home_pos1_q2,
+          pos2: resultRows.rows[0].home_pos2_q2,
+          pos3: resultRows.rows[0].home_pos3_q2,
+          pos4: resultRows.rows[0].home_pos4_q2,
+          pos5: resultRows.rows[0].home_pos5_q2,
+          pos6: resultRows.rows[0].home_pos6_q2,
+          pos7: resultRows.rows[0].home_pos7_q2,
+          pos8: resultRows.rows[0].home_pos8_q2,
+          legs: resultRows.rows[0].home_legs_q2,
+          score: resultRows.rows[0].home_score_q2
+        }
+      },
+      q3: {
+        guest: {
+          pos1: resultRows.rows[0].guest_pos1_q3,
+          pos2: resultRows.rows[0].guest_pos2_q3,
+          pos3: resultRows.rows[0].guest_pos3_q3,
+          pos4: resultRows.rows[0].guest_pos4_q3,
+          pos5: resultRows.rows[0].guest_pos5_q3,
+          pos6: resultRows.rows[0].guest_pos6_q3,
+          pos7: resultRows.rows[0].guest_pos7_q3,
+          pos8: resultRows.rows[0].guest_pos8_q3,
+          legs: resultRows.rows[0].guest_legs_q3,
+          score: resultRows.rows[0].guest_score_q3
+        },
+        home: {
+          pos1: resultRows.rows[0].home_pos1_q3,
+          pos2: resultRows.rows[0].home_pos2_q3,
+          pos3: resultRows.rows[0].home_pos3_q3,
+          pos4: resultRows.rows[0].home_pos4_q3,
+          pos5: resultRows.rows[0].home_pos5_q3,
+          pos6: resultRows.rows[0].home_pos6_q3,
+          pos7: resultRows.rows[0].home_pos7_q3,
+          pos8: resultRows.rows[0].home_pos8_q3,
+          legs: resultRows.rows[0].home_legs_q3,
+          score: resultRows.rows[0].home_score_q3
+        }
+      },
+      q4: {
+        guest: {
+          pos1: resultRows.rows[0].guest_pos1_q4,
+          pos2: resultRows.rows[0].guest_pos2_q4,
+          pos3: resultRows.rows[0].guest_pos3_q4,
+          pos4: resultRows.rows[0].guest_pos4_q4,
+          pos5: resultRows.rows[0].guest_pos5_q4,
+          pos6: resultRows.rows[0].guest_pos6_q4,
+          pos7: resultRows.rows[0].guest_pos7_q4,
+          pos8: resultRows.rows[0].guest_pos8_q4,
+          legs: resultRows.rows[0].guest_legs_q4,
+          score: resultRows.rows[0].guest_score_q4
+        },
+        home: {
+          pos1: resultRows.rows[0].home_pos1_q4,
+          pos2: resultRows.rows[0].home_pos2_q4,
+          pos3: resultRows.rows[0].home_pos3_q4,
+          pos4: resultRows.rows[0].home_pos4_q4,
+          pos5: resultRows.rows[0].home_pos5_q4,
+          pos6: resultRows.rows[0].home_pos6_q4,
+          pos7: resultRows.rows[0].home_pos7_q4,
+          pos8: resultRows.rows[0].home_pos8_q4,
+          legs: resultRows.rows[0].home_legs_q4,
+          score: resultRows.rows[0].home_score_q4
+        }
+      }
+    }
+  };
+  return result;
 };
