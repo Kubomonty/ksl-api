@@ -93,7 +93,7 @@ const getMatchesPage = async ({ limit, offset }: { limit: number, offset: number
 };
 
 export const getMatchDetailsReq = async (req: Request, res: Response): Promise<void> => {
-  const matchId = req.params.matchId;
+  const matchId = req.params.id;
   console.log(`Get match details for match ${matchId} at ${new Date().toISOString()}`);
 
   try {
