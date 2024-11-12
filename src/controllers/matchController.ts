@@ -107,7 +107,8 @@ export const getMatchDetailsReq = async (req: Request, res: Response): Promise<v
 const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
   const query = `
     SELECT
-      m.id, m.guest_team, m.guest_captain, m.home_team, m.home_captain, m.match_location, m.match_date, m.created_at, m.status,
+      m.id AS id, m.guest_team AS guest_team, m.guest_captain AS guest_captain, m.home_team AS home_team, m.home_captain AS home_captain,
+      m.match_location AS match_location, m.match_date AS match_date, m.created_at AS created_at, m.status as status,
       q1.guest_pos1 AS guest_pos1_q1, q1.guest_pos2 AS guest_pos2_q1, q1.guest_pos3 AS guest_pos3_q1, q1.guest_pos4 AS guest_pos4_q1,
       q1.guest_pos5 AS guest_pos5_q1, q1.guest_pos6 AS guest_pos6_q1, q1.guest_pos7 AS guest_pos7_q1, q1.guest_pos8 AS guest_pos8_q1,
       q1.home_pos1 AS home_pos1_q1, q1.home_pos2 AS home_pos2_q1, q1.home_pos3 AS home_pos3_q1, q1.home_pos4 AS home_pos4_q1,
@@ -141,7 +142,7 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
     JOIN match_details AS q4
       ON m.id = q4.match_id
       AND q4.quarter = 4
-    WHERE id = $1;
+    WHERE m.id = $1;
   `;
   const values = [matchId];
 
