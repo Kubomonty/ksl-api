@@ -113,22 +113,30 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
       q1.guest_pos5 AS guest_pos5_q1, q1.guest_pos6 AS guest_pos6_q1, q1.guest_pos7 AS guest_pos7_q1, q1.guest_pos8 AS guest_pos8_q1,
       q1.home_pos1 AS home_pos1_q1, q1.home_pos2 AS home_pos2_q1, q1.home_pos3 AS home_pos3_q1, q1.home_pos4 AS home_pos4_q1,
       q1.home_pos5 AS home_pos5_q1, q1.home_pos6 AS home_pos6_q1, q1.home_pos7 AS home_pos7_q1, q1.home_pos8 AS home_pos8_q1,
-      q1.guest_legs AS guest_legs_q1, q1.home_legs AS home_legs_q1, q1.guest_score AS guest_score_q1, q1.home_score AS home_score_q1,
+      q1.guest_legs1 AS guest_legs_q1_1, q1.guest_legs2 AS guest_legs_q1_2, q1.guest_legs3 AS guest_legs_q1_3, q1.guest_legs4 AS guest_legs_q1_4,
+      q1.home_legs1 AS home_legs_q1_1, q1.home_legs2 AS home_legs_q1_2, q1.home_legs3 AS home_legs_q1_3, q1.home_legs4 AS home_legs_q1_4,
+      q1.guest_score AS guest_score_q1, q1.home_score AS home_score_q1,
       q2.guest_pos1 AS guest_pos1_q2, q2.guest_pos2 AS guest_pos2_q2, q2.guest_pos3 AS guest_pos3_q2, q2.guest_pos4 AS guest_pos4_q2,
       q2.guest_pos5 AS guest_pos5_q2, q2.guest_pos6 AS guest_pos6_q2, q2.guest_pos7 AS guest_pos7_q2, q2.guest_pos8 AS guest_pos8_q2,
       q2.home_pos1 AS home_pos1_q2, q2.home_pos2 AS home_pos2_q2, q2.home_pos3 AS home_pos3_q2, q2.home_pos4 AS home_pos4_q2,
       q2.home_pos5 AS home_pos5_q2, q2.home_pos6 AS home_pos6_q2, q2.home_pos7 AS home_pos7_q2, q2.home_pos8 AS home_pos8_q2,
-      q2.guest_legs AS guest_legs_q2, q2.home_legs AS home_legs_q2, q2.guest_score AS guest_score_q2, q2.home_score AS home_score_q2,
+      q2.guest_legs1 AS guest_legs_q2_1, q2.guest_legs2 AS guest_legs_q2_2, q2.guest_legs3 AS guest_legs_q2_3, q2.guest_legs4 AS guest_legs_q2_4,
+      q2.home_legs1 AS home_legs_q2_1, q2.home_legs2 AS home_legs_q2_2, q2.home_legs3 AS home_legs_q2_3, q2.home_legs4 AS home_legs_q2_4,
+      q2.guest_score AS guest_score_q2, q2.home_score AS home_score_q2,
       q3.guest_pos1 AS guest_pos1_q3, q3.guest_pos2 AS guest_pos2_q3, q3.guest_pos3 AS guest_pos3_q3, q3.guest_pos4 AS guest_pos4_q3,
       q3.guest_pos5 AS guest_pos5_q3, q3.guest_pos6 AS guest_pos6_q3, q3.guest_pos7 AS guest_pos7_q3, q3.guest_pos8 AS guest_pos8_q3,
       q3.home_pos1 AS home_pos1_q3, q3.home_pos2 AS home_pos2_q3, q3.home_pos3 AS home_pos3_q3, q3.home_pos4 AS home_pos4_q3,
       q3.home_pos5 AS home_pos5_q3, q3.home_pos6 AS home_pos6_q3, q3.home_pos7 AS home_pos7_q3, q3.home_pos8 AS home_pos8_q3,
-      q3.guest_legs AS guest_legs_q3, q3.home_legs AS home_legs_q3, q3.guest_score AS guest_score_q3, q3.home_score AS home_score_q3,
+      q3.guest_legs1 AS guest_legs_q3_1, q3.guest_legs2 AS guest_legs_q3_2, q3.guest_legs3 AS guest_legs_q3_3, q3.guest_legs4 AS guest_legs_q3_4,
+      q3.home_legs1 AS home_legs_q3_1, q3.home_legs2 AS home_legs_q3_2, q3.home_legs3 AS home_legs_q3_3, q3.home_legs4 AS home_legs_q3_4,
+      q3.guest_score AS guest_score_q3, q3.home_score AS home_score_q3,
       q4.guest_pos1 AS guest_pos1_q4, q4.guest_pos2 AS guest_pos2_q4, q4.guest_pos3 AS guest_pos3_q4, q4.guest_pos4 AS guest_pos4_q4,
       q4.guest_pos5 AS guest_pos5_q4, q4.guest_pos6 AS guest_pos6_q4, q4.guest_pos7 AS guest_pos7_q4, q4.guest_pos8 AS guest_pos8_q4,
       q4.home_pos1 AS home_pos1_q4, q4.home_pos2 AS home_pos2_q4, q4.home_pos3 AS home_pos3_q4, q4.home_pos4 AS home_pos4_q4,
       q4.home_pos5 AS home_pos5_q4, q4.home_pos6 AS home_pos6_q4, q4.home_pos7 AS home_pos7_q4, q4.home_pos8 AS home_pos8_q4,
-      q4.guest_legs AS guest_legs_q4, q4.home_legs AS home_legs_q4, q4.guest_score AS guest_score_q4, q4.home_score AS home_score_q4
+      q4.guest_legs1 AS guest_legs_q4_1, q4.guest_legs2 AS guest_legs_q4_2, q4.guest_legs3 AS guest_legs_q4_3, q4.guest_legs4 AS guest_legs_q4_4,
+      q4.home_legs1 AS home_legs_q4_1, q4.home_legs2 AS home_legs_q4_2, q4.home_legs3 AS home_legs_q4_3, q4.home_legs4 AS home_legs_q4_4,
+      q4.guest_score AS guest_score_q4, q4.home_score AS home_score_q4
     FROM matches AS m
     JOIN match_details AS q1
       ON m.id = q1.match_id
@@ -168,7 +176,12 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
           pos6: resultRows.rows[0].guest_pos6_q1,
           pos7: resultRows.rows[0].guest_pos7_q1,
           pos8: resultRows.rows[0].guest_pos8_q1,
-          legs: resultRows.rows[0].guest_legs_q1,
+          legs: {
+            m1: resultRows.rows[0].guest_legs_q1_1,
+            m2: resultRows.rows[0].guest_legs_q1_2,
+            m3: resultRows.rows[0].guest_legs_q1_3,
+            m4: resultRows.rows[0].guest_legs_q1_4
+          },
           score: resultRows.rows[0].guest_score_q1
         },
         home: {
@@ -180,7 +193,12 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
           pos6: resultRows.rows[0].home_pos6_q1,
           pos7: resultRows.rows[0].home_pos7_q1,
           pos8: resultRows.rows[0].home_pos8_q1,
-          legs: resultRows.rows[0].home_legs_q1,
+          legs: {
+            m1: resultRows.rows[0].home_legs_q1_1,
+            m2: resultRows.rows[0].home_legs_q1_2,
+            m3: resultRows.rows[0].home_legs_q1_3,
+            m4: resultRows.rows[0].home_legs_q1_4
+          },
           score: resultRows.rows[0].home_score_q1
         }
       },
@@ -194,7 +212,12 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
           pos6: resultRows.rows[0].guest_pos6_q2,
           pos7: resultRows.rows[0].guest_pos7_q2,
           pos8: resultRows.rows[0].guest_pos8_q2,
-          legs: resultRows.rows[0].guest_legs_q2,
+          legs: {
+            m1: resultRows.rows[0].guest_legs_q2_1,
+            m2: resultRows.rows[0].guest_legs_q2_2,
+            m3: resultRows.rows[0].guest_legs_q2_3,
+            m4: resultRows.rows[0].guest_legs_q2_4
+          },
           score: resultRows.rows[0].guest_score_q2
         },
         home: {
@@ -206,7 +229,12 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
           pos6: resultRows.rows[0].home_pos6_q2,
           pos7: resultRows.rows[0].home_pos7_q2,
           pos8: resultRows.rows[0].home_pos8_q2,
-          legs: resultRows.rows[0].home_legs_q2,
+          legs: {
+            m1: resultRows.rows[0].home_legs_q2_1,
+            m2: resultRows.rows[0].home_legs_q2_2,
+            m3: resultRows.rows[0].home_legs_q2_3,
+            m4: resultRows.rows[0].home_legs_q2_4
+          },
           score: resultRows.rows[0].home_score_q2
         }
       },
@@ -220,7 +248,12 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
           pos6: resultRows.rows[0].guest_pos6_q3,
           pos7: resultRows.rows[0].guest_pos7_q3,
           pos8: resultRows.rows[0].guest_pos8_q3,
-          legs: resultRows.rows[0].guest_legs_q3,
+          legs: {
+            m1: resultRows.rows[0].guest_legs_q3_1,
+            m2: resultRows.rows[0].guest_legs_q3_2,
+            m3: resultRows.rows[0].guest_legs_q3_3,
+            m4: resultRows.rows[0].guest_legs_q3_4
+          },
           score: resultRows.rows[0].guest_score_q3
         },
         home: {
@@ -232,7 +265,12 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
           pos6: resultRows.rows[0].home_pos6_q3,
           pos7: resultRows.rows[0].home_pos7_q3,
           pos8: resultRows.rows[0].home_pos8_q3,
-          legs: resultRows.rows[0].home_legs_q3,
+          legs: {
+            m1: resultRows.rows[0].home_legs_q3_1,
+            m2: resultRows.rows[0].home_legs_q3_2,
+            m3: resultRows.rows[0].home_legs_q3_3,
+            m4: resultRows.rows[0].home_legs_q3_4
+          },
           score: resultRows.rows[0].home_score_q3
         }
       },
@@ -246,7 +284,12 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
           pos6: resultRows.rows[0].guest_pos6_q4,
           pos7: resultRows.rows[0].guest_pos7_q4,
           pos8: resultRows.rows[0].guest_pos8_q4,
-          legs: resultRows.rows[0].guest_legs_q4,
+          legs: {
+            m1: resultRows.rows[0].guest_legs_q4_1,
+            m2: resultRows.rows[0].guest_legs_q4_2,
+            m3: resultRows.rows[0].guest_legs_q4_3,
+            m4: resultRows.rows[0].guest_legs_q4_4
+          },
           score: resultRows.rows[0].guest_score_q4
         },
         home: {
@@ -258,7 +301,12 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
           pos6: resultRows.rows[0].home_pos6_q4,
           pos7: resultRows.rows[0].home_pos7_q4,
           pos8: resultRows.rows[0].home_pos8_q4,
-          legs: resultRows.rows[0].home_legs_q4,
+          legs: {
+            m1: resultRows.rows[0].home_legs_q4_1,
+            m2: resultRows.rows[0].home_legs_q4_2,
+            m3: resultRows.rows[0].home_legs_q4_3,
+            m4: resultRows.rows[0].home_legs_q4_4
+          },
           score: resultRows.rows[0].home_score_q4
         }
       }

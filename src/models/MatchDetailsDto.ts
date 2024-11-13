@@ -19,7 +19,12 @@ export interface MatchDetailsDto {
         pos6: string;
         pos7: string;
         pos8: string;
-        legs: number;
+        legs: {
+          m1: number;
+          m2: number;
+          m3: number;
+          m4: number;
+        };
         score: number;
       };
       home: {
@@ -31,7 +36,12 @@ export interface MatchDetailsDto {
         pos6: string;
         pos7: string;
         pos8: string;
-        legs: number;
+        legs: {
+          m1: number;
+          m2: number;
+          m3: number;
+          m4: number;
+        };
         score: number;
       };
     };
@@ -45,7 +55,12 @@ export interface MatchDetailsDto {
         pos6: string;
         pos7: string;
         pos8: string;
-        legs: number;
+        legs: {
+          m1: number;
+          m2: number;
+          m3: number;
+          m4: number;
+        };
         score: number;
       };
       home: {
@@ -57,7 +72,12 @@ export interface MatchDetailsDto {
         pos6: string;
         pos7: string;
         pos8: string;
-        legs: number;
+        legs: {
+          m1: number;
+          m2: number;
+          m3: number;
+          m4: number;
+        };
         score: number;
       };
     };
@@ -71,7 +91,12 @@ export interface MatchDetailsDto {
         pos6: string;
         pos7: string;
         pos8: string;
-        legs: number;
+        legs: {
+          m1: number;
+          m2: number;
+          m3: number;
+          m4: number;
+        };
         score: number;
       };
       home: {
@@ -83,7 +108,12 @@ export interface MatchDetailsDto {
         pos6: string;
         pos7: string;
         pos8: string;
-        legs: number;
+        legs: {
+          m1: number;
+          m2: number;
+          m3: number;
+          m4: number;
+        };
         score: number;
       };
     };
@@ -97,7 +127,12 @@ export interface MatchDetailsDto {
         pos6: string;
         pos7: string;
         pos8: string;
-        legs: number;
+        legs: {
+          m1: number;
+          m2: number;
+          m3: number;
+          m4: number;
+        };
         score: number;
       };
       home: {
@@ -109,7 +144,12 @@ export interface MatchDetailsDto {
         pos6: string;
         pos7: string;
         pos8: string;
-        legs: number;
+        legs: {
+          m1: number;
+          m2: number;
+          m3: number;
+          m4: number;
+        };
         score: number;
       };
     };
