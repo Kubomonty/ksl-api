@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 import { MatchStatus } from '../enums/MatchStatus.enum.js';
 import pool from '../config/db.js';
 import { v4 as uuidv4 } from 'uuid';
-import { stat } from 'fs';
 
 export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody>, res: Response): Promise<void> => {
   const {
@@ -64,7 +63,7 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
   const matchDetailsQ1Query = `
     INSERT INTO match_details(id, match_id, quarter,
       guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
-      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8,)
+      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8)
     VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
     RETURNING id;
   `;
@@ -80,7 +79,7 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
   const matchDetailsQ2Query = `
     INSERT INTO match_details(id, match_id, quarter,
       guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
-      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8,)
+      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8)
     VALUES ($1, $2, 2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
     RETURNING id;
   `;
@@ -96,7 +95,7 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
   const matchDetailsQ3Query = `
     INSERT INTO match_details(id, match_id, quarter,
       guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
-      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8,)
+      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8)
     VALUES ($1, $2, 3, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
     RETURNING id;
   `;
@@ -112,7 +111,7 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
   const matchDetailsQ4Query = `
     INSERT INTO match_details(id, match_id, quarter,
       guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
-      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8,)
+      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8)
     VALUES ($1, $2, 4, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
     RETURNING id;
   `;
