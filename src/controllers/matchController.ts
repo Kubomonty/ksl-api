@@ -64,11 +64,11 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
     INSERT INTO match_details(id, match_id, quarter,
       guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
       home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8)
-    VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
     RETURNING id;
   `;
   const matchDetailsQ1Values = [
-    uuidv4(), matchResult.rows[0].id, 1, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
+    uuidv4(), matchResult.rows[0].id, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
     homePos1, homePos2, homePos3, homePos4, homePos5, homePos6, homePos7, homePos8
   ];
   const q1Result = await pool.query(matchDetailsQ1Query, matchDetailsQ1Values);
@@ -80,11 +80,11 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
     INSERT INTO match_details(id, match_id, quarter,
       guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
       home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8)
-    VALUES ($1, $2, 2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    VALUES ($1, $2, 2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
     RETURNING id;
   `;
   const matchDetailsQ2Values = [
-    uuidv4(), matchResult.rows[0].id, 2, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
+    uuidv4(), matchResult.rows[0].id, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
     homePos1, homePos2, homePos3, homePos4, homePos5, homePos6, homePos7, homePos8
   ];
   const q2Result = await pool.query(matchDetailsQ2Query, matchDetailsQ2Values);
@@ -96,11 +96,11 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
     INSERT INTO match_details(id, match_id, quarter,
       guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
       home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8)
-    VALUES ($1, $2, 3, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    VALUES ($1, $2, 3, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
     RETURNING id;
   `;
   const matchDetailsQ3Values = [
-    uuidv4(), matchResult.rows[0].id, 3, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
+    uuidv4(), matchResult.rows[0].id, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
     homePos1, homePos2, homePos3, homePos4, homePos5, homePos6, homePos7, homePos8
   ];
   const q3Result = await pool.query(matchDetailsQ3Query, matchDetailsQ3Values);
@@ -112,11 +112,11 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
     INSERT INTO match_details(id, match_id, quarter,
       guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
       home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8)
-    VALUES ($1, $2, 4, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    VALUES ($1, $2, 4, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
     RETURNING id;
   `;
   const matchDetailsQ4Values = [
-    uuidv4(), matchResult.rows[0].id, 4, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
+    uuidv4(), matchResult.rows[0].id, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
     homePos1, homePos2, homePos3, homePos4, homePos5, homePos6, homePos7, homePos8
   ];
   const q4Result = await pool.query(matchDetailsQ4Query, matchDetailsQ4Values);
