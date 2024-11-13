@@ -48,21 +48,84 @@ export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody
 const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, guestPos1, guestPos2, guestPos3,
   guestPos4, guestPos5, guestPos6, guestPos7, guestPos8, homeTeam, homeCaptain, homePos1, homePos2, homePos3, homePos4,
   homePos5, homePos6, homePos7, homePos8, matchLocation, matchDate }: CreateMatchRequestBody): Promise<Match> => {
-  const query = `
-    INSERT INTO matches (id, created_at, created_by, guest_team, guest_captain, guest_pos1, guest_pos2, guest_pos3,
-      guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8, home_team, home_captain, home_pos1, home_pos2, home_pos3, home_pos4,
-      home_pos5, home_pos6, home_pos7, home_pos8, match_location, match_date, status)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
+  const matchQuery = `
+    INSERT INTO matches (id, created_at, created_by, guest_team, guest_captain, home_team, home_captain, match_location, match_date, status)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     RETURNING id;
   `;
-  const values = [
-    uuidv4(), createdAt, createdBy, guestTeam, guestCaptain, guestPos1, guestPos2, guestPos3,
-    guestPos4, guestPos5, guestPos6, guestPos7, guestPos8, homeTeam, homeCaptain, homePos1, homePos2, homePos3, homePos4,
-    homePos5, homePos6, homePos7, homePos8, matchLocation, matchDate, MatchStatus.NEW
+  const matchValues = [
+    uuidv4(), createdAt, createdBy, guestTeam, guestCaptain, homeTeam, homeCaptain, matchLocation, matchDate, MatchStatus.NEW
   ];
+  const matchResult = await pool.query(matchQuery, matchValues);
+  if (matchResult.rowCount === 0) {
+    throw new Error('Match not created');
+  }
 
-  const result = await pool.query(query, values);
-  return result.rows[0];
+  const matchDetailsQ1Query = `
+    INSERT INTO match_details(id, match_id, quarter,
+      guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
+      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8,)
+    VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    RETURNING id;
+  `;
+  const matchDetailsQ1Values = [
+    uuidv4(), matchResult.rows[0].id, 1, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
+    homePos1, homePos2, homePos3, homePos4, homePos5, homePos6, homePos7, homePos8
+  ];
+  const q1Result = await pool.query(matchDetailsQ1Query, matchDetailsQ1Values);
+  if (q1Result.rowCount === 0) {
+    throw new Error('Match details Q1 not created');
+  }
+
+  const matchDetailsQ2Query = `
+    INSERT INTO match_details(id, match_id, quarter,
+      guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
+      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8,)
+    VALUES ($1, $2, 2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    RETURNING id;
+  `;
+  const matchDetailsQ2Values = [
+    uuidv4(), matchResult.rows[0].id, 2, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
+    homePos1, homePos2, homePos3, homePos4, homePos5, homePos6, homePos7, homePos8
+  ];
+  const q2Result = await pool.query(matchDetailsQ2Query, matchDetailsQ2Values);
+  if (q2Result.rowCount === 0) {
+    throw new Error('Match details Q2 not created');
+  }
+
+  const matchDetailsQ3Query = `
+    INSERT INTO match_details(id, match_id, quarter,
+      guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
+      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8,)
+    VALUES ($1, $2, 3, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    RETURNING id;
+  `;
+  const matchDetailsQ3Values = [
+    uuidv4(), matchResult.rows[0].id, 3, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
+    homePos1, homePos2, homePos3, homePos4, homePos5, homePos6, homePos7, homePos8
+  ];
+  const q3Result = await pool.query(matchDetailsQ3Query, matchDetailsQ3Values);
+  if (q3Result.rowCount === 0) {
+    throw new Error('Match details Q3 not created');
+  }
+
+  const matchDetailsQ4Query = `
+    INSERT INTO match_details(id, match_id, quarter,
+      guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6, guest_pos7, guest_pos8,
+      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6, home_pos7, home_pos8,)
+    VALUES ($1, $2, 4, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+    RETURNING id;
+  `;
+  const matchDetailsQ4Values = [
+    uuidv4(), matchResult.rows[0].id, 4, guestPos1, guestPos2, guestPos3, guestPos4, guestPos5, guestPos6, guestPos7, guestPos8,
+    homePos1, homePos2, homePos3, homePos4, homePos5, homePos6, homePos7, homePos8
+  ];
+  const q4Result = await pool.query(matchDetailsQ4Query, matchDetailsQ4Values);
+  if (q4Result.rowCount === 0) {
+    throw new Error('Match details Q4 not created');
+  }
+
+  return matchResult.rows[0];
 };
 
 export const getMatchesPageReq = async (req: Request, res: Response): Promise<void> => {
@@ -72,14 +135,14 @@ export const getMatchesPageReq = async (req: Request, res: Response): Promise<vo
   console.log(`Get matches page ${page} with limit ${limit} at ${new Date().toISOString()}`);
 
   try {
-    const matches: Match[] = await getMatchesPage({ limit, offset });
+    const matches = await getMatchesPage({ limit, offset });
     res.status(200).send(matches);
   } catch (err) {
     console.error(err);
     res.status(500).send('Some error has occurred');
   }
 };
-const getMatchesPage = async ({ limit, offset }: { limit: number, offset: number }): Promise<Match[]> => {
+const getMatchesPage = async ({ limit, offset }: { limit: number, offset: number }) => {
   const query = `
     SELECT *
     FROM matches
@@ -155,6 +218,9 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
   const values = [matchId];
 
   const resultRows = await pool.query(query, values);
+  if (resultRows.rowCount === 0) {
+    throw new Error(`Match ${matchId} not found`);
+  }
   const result = {
     id: resultRows.rows[0].id,
     guestTeam: resultRows.rows[0].guest_team,
