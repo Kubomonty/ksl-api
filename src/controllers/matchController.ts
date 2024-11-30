@@ -1,10 +1,10 @@
-import { CreateMatchRequestBody, Match, MatchDetailsDto } from '../models/index.js';
+import { CreateMatchRequestBodyDto, MatchDto, MatchDetailsDto, MatchUpdateDto } from '../models/index.js';
 import { Request, Response } from 'express';
 import { MatchStatus } from '../enums/MatchStatus.enum.js';
 import pool from '../config/db.js';
 import { v4 as uuidv4 } from 'uuid';
 
-export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody>, res: Response): Promise<void> => {
+export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBodyDto>, res: Response): Promise<void> => {
   const {
     createdAt, createdBy,
     guestTeam, guestCaptain, guestPos1, guestPos2, guestPos3,
@@ -46,7 +46,7 @@ export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody
 };
 const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, guestPos1, guestPos2, guestPos3,
   guestPos4, guestPos5, guestPos6, guestPos7, guestPos8, homeTeam, homeCaptain, homePos1, homePos2, homePos3, homePos4,
-  homePos5, homePos6, homePos7, homePos8, matchLocation, matchDate }: CreateMatchRequestBody): Promise<Match> => {
+  homePos5, homePos6, homePos7, homePos8, matchLocation, matchDate }: CreateMatchRequestBodyDto): Promise<MatchDto> => {
   const matchQuery = `
     INSERT INTO matches (id, created_at, created_by, guest_team, guest_captain, home_team, home_captain, match_location, match_date, status)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -145,7 +145,7 @@ const getMatchesPage = async ({ limit, offset }: { limit: number, offset: number
   const query = `
     SELECT *
     FROM matches
-    ORDER BY match_date DESC
+    ORDER BY match_date DESC, created_at DESC
     LIMIT $1 OFFSET $2;
   `;
   const values = [limit, offset];
@@ -378,4 +378,97 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
     }
   };
   return result;
+};
+
+export const updateMatchReq = async (req: Request, res: Response): Promise<void> => {
+  const matchUpdate: MatchUpdateDto = req.body;
+  console.log(`Update match ${matchUpdate.id} at ${new Date().toISOString()}`);
+
+  try {
+    await updateMatch(matchUpdate);
+    res.status(200).send('Match updated');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Some error has occurred');
+  }
+};
+const updateMatch = async (matchUpdate: MatchUpdateDto): Promise<void> => {
+  const matchQuery = `
+    UPDATE matches
+    SET status = $2, status_changed_at = $3, status_changed_by = $4
+    WHERE id = $1;
+  `
+  const matchValues = [matchUpdate.id, matchUpdate.status, matchUpdate.statusChangetAt, matchUpdate.statusChangedBy];
+  const matchResult = await pool.query(matchQuery, matchValues);
+  if (matchResult.rowCount === 0) {
+    throw new Error('Match not updated');
+  }
+
+  const quarterQuery = `
+    UPDATE match_details
+    SET guest_pos1 = $3, guest_pos2 = $4, guest_pos3 = $5, guest_pos4 = $6, guest_pos5 = $7, guest_pos6 = $8, guest_pos7 = $9, guest_pos8 = $10,
+      home_pos1 = $11, home_pos2 = $12, home_pos3 = $13, home_pos4 = $14, home_pos5 = $15, home_pos6 = $16, home_pos7 = $17, home_pos8 = $18,
+      guest_legs1 = $19, guest_legs2 = $20, guest_legs3 = $21, guest_legs4 = $22, home_legs1 = $23, home_legs2 = $24, home_legs3 = $25, home_legs4 = $26,
+      guest_score = $27, home_score = $28
+    WHERE match_id = $1 AND quarter = $2;
+  `;
+  const q1Values = [
+    matchUpdate.id, 1,
+    matchUpdate.quarters.q1.guest.pos1, matchUpdate.quarters.q1.guest.pos2, matchUpdate.quarters.q1.guest.pos3, matchUpdate.quarters.q1.guest.pos4,
+    matchUpdate.quarters.q1.guest.pos5, matchUpdate.quarters.q1.guest.pos6, matchUpdate.quarters.q1.guest.pos7, matchUpdate.quarters.q1.guest.pos8,
+    matchUpdate.quarters.q1.home.pos1, matchUpdate.quarters.q1.home.pos2, matchUpdate.quarters.q1.home.pos3, matchUpdate.quarters.q1.home.pos4,
+    matchUpdate.quarters.q1.home.pos5, matchUpdate.quarters.q1.home.pos6, matchUpdate.quarters.q1.home.pos7, matchUpdate.quarters.q1.home.pos8,
+    matchUpdate.quarters.q1.guest.legs.m1, matchUpdate.quarters.q1.guest.legs.m2, matchUpdate.quarters.q1.guest.legs.m3, matchUpdate.quarters.q1.guest.legs.m4,
+    matchUpdate.quarters.q1.home.legs.m1, matchUpdate.quarters.q1.home.legs.m2, matchUpdate.quarters.q1.home.legs.m3, matchUpdate.quarters.q1.home.legs.m4,
+    matchUpdate.quarters.q1.guest.score, matchUpdate.quarters.q1.home.score
+  ];
+  const q1Result = await pool.query(quarterQuery, q1Values);
+  if (q1Result.rowCount === 0) {
+    throw new Error('Match details Q1 not updated');
+  }
+
+  const q2Values = [
+    matchUpdate.id, 2,
+    matchUpdate.quarters.q2.guest.pos1, matchUpdate.quarters.q2.guest.pos2, matchUpdate.quarters.q2.guest.pos3, matchUpdate.quarters.q2.guest.pos4,
+    matchUpdate.quarters.q2.guest.pos5, matchUpdate.quarters.q2.guest.pos6, matchUpdate.quarters.q2.guest.pos7, matchUpdate.quarters.q2.guest.pos8,
+    matchUpdate.quarters.q2.home.pos1, matchUpdate.quarters.q2.home.pos2, matchUpdate.quarters.q2.home.pos3, matchUpdate.quarters.q2.home.pos4,
+    matchUpdate.quarters.q2.home.pos5, matchUpdate.quarters.q2.home.pos6, matchUpdate.quarters.q2.home.pos7, matchUpdate.quarters.q2.home.pos8,
+    matchUpdate.quarters.q2.guest.legs.m1, matchUpdate.quarters.q2.guest.legs.m2, matchUpdate.quarters.q2.guest.legs.m3, matchUpdate.quarters.q2.guest.legs.m4,
+    matchUpdate.quarters.q2.home.legs.m1, matchUpdate.quarters.q2.home.legs.m2, matchUpdate.quarters.q2.home.legs.m3, matchUpdate.quarters.q2.home.legs.m4,
+    matchUpdate.quarters.q2.guest.score, matchUpdate.quarters.q2.home.score
+  ];
+  const q2Result = await pool.query(quarterQuery, q2Values);
+  if (q2Result.rowCount === 0) {
+    throw new Error('Match details Q2 not updated');
+  }
+
+  const q3Values = [
+    matchUpdate.id, 3,
+    matchUpdate.quarters.q3.guest.pos1, matchUpdate.quarters.q3.guest.pos2, matchUpdate.quarters.q3.guest.pos3, matchUpdate.quarters.q3.guest.pos4,
+    matchUpdate.quarters.q3.guest.pos5, matchUpdate.quarters.q3.guest.pos6, matchUpdate.quarters.q3.guest.pos7, matchUpdate.quarters.q3.guest.pos8,
+    matchUpdate.quarters.q3.home.pos1, matchUpdate.quarters.q3.home.pos2, matchUpdate.quarters.q3.home.pos3, matchUpdate.quarters.q3.home.pos4,
+    matchUpdate.quarters.q3.home.pos5, matchUpdate.quarters.q3.home.pos6, matchUpdate.quarters.q3.home.pos7, matchUpdate.quarters.q3.home.pos8,
+    matchUpdate.quarters.q3.guest.legs.m1, matchUpdate.quarters.q3.guest.legs.m2, matchUpdate.quarters.q3.guest.legs.m3, matchUpdate.quarters.q3.guest.legs.m4,
+    matchUpdate.quarters.q3.home.legs.m1, matchUpdate.quarters.q3.home.legs.m2, matchUpdate.quarters.q3.home.legs.m3, matchUpdate.quarters.q3.home.legs.m4,
+    matchUpdate.quarters.q3.guest.score, matchUpdate.quarters.q3.home.score
+  ];
+  const q3Result = await pool.query(quarterQuery, q3Values);
+  if (q3Result.rowCount === 0) {
+    throw new Error('Match details Q3 not updated');
+  }
+
+  const q4Values = [
+    matchUpdate.id, 4,
+    matchUpdate.quarters.q4.guest.pos1, matchUpdate.quarters.q4.guest.pos2, matchUpdate.quarters.q4.guest.pos3, matchUpdate.quarters.q4.guest.pos4,
+    matchUpdate.quarters.q4.guest.pos5, matchUpdate.quarters.q4.guest.pos6, matchUpdate.quarters.q4.guest.pos7, matchUpdate.quarters.q4.guest.pos8,
+    matchUpdate.quarters.q4.home.pos1, matchUpdate.quarters.q4.home.pos2, matchUpdate.quarters.q4.home.pos3, matchUpdate.quarters.q4.home.pos4,
+    matchUpdate.quarters.q4.home.pos5, matchUpdate.quarters.q4.home.pos6, matchUpdate.quarters.q4.home.pos7, matchUpdate.quarters.q4.home.pos8,
+    matchUpdate.quarters.q4.guest.legs.m1, matchUpdate.quarters.q4.guest.legs.m2, matchUpdate.quarters.q4.guest.legs.m3, matchUpdate.quarters.q4.guest.legs.m4,
+    matchUpdate.quarters.q4.home.legs.m1, matchUpdate.quarters.q4.home.legs.m2, matchUpdate.quarters.q4.home.legs.m3, matchUpdate.quarters.q4.home.legs.m4,
+    matchUpdate.quarters.q4.guest.score, matchUpdate.quarters.q4.home.score
+  ];
+  const q4Result = await pool.query(quarterQuery, q4Values);
+  if (q4Result.rowCount === 0) {
+    throw new Error('Match details Q4 not updated');
+  }
 };
