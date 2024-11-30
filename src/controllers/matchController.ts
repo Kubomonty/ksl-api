@@ -143,8 +143,11 @@ export const getMatchesPageReq = async (req: Request, res: Response): Promise<vo
 };
 const getMatchesPage = async ({ limit, offset }: { limit: number, offset: number }) => {
   const query = `
-    SELECT *
-    FROM matches
+    SELECT m.*, d.guest_score, d.home_score
+    FROM matches AS m
+    LEFT JOIN match_details AS d
+      ON m.id = d.match_id
+      AND d.quarter = 4
     ORDER BY match_date DESC, created_at DESC
     LIMIT $1 OFFSET $2;
   `;
