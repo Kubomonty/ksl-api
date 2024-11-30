@@ -1,4 +1,4 @@
-export interface CreateMatchRequestBody {
+export interface CreateMatchRequestBodyDto {
   createdAt: Date;
   createdBy: string;
   guestTeam: string;
