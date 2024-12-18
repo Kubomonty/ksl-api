@@ -64,7 +64,7 @@ export const requestPasswordCreate = async (userId: string): Promise<boolean> =>
     return false;
   }
 
-  const resetToken = jwt.sign({ id: user.id }, emailSecret, { expiresIn: '1h' });
+  const resetToken = jwt.sign({ id: user.id }, emailSecret, { expiresIn: '12h' });
   const resetLink = `${UI_URL}/reset-password?token=${resetToken}`;
 
   const mailOptions = {
@@ -100,7 +100,7 @@ export const requestPasswordReset: RequestHandler = async (req, res) => {
     return res.status(404).send('User not found');
   }
 
-  const resetToken = jwt.sign({ id: user.id }, emailSecret, { expiresIn: '1h' });
+  const resetToken = jwt.sign({ id: user.id }, emailSecret, { expiresIn: '12h' });
   const resetLink = `${UI_URL}/reset-password?token=${resetToken}`;
 
   const mailOptions = {
