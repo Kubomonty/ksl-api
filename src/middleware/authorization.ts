@@ -142,6 +142,27 @@ export const resetPassword: RequestHandler = async (req, res) => {
   }
 };
 
+export const changePasswordReq: RequestHandler = async (req, res) => {
+  const { oldPassword, newPassword, userId } = req.body;
+  console.log(`Change password for user ${userId} at ${new Date().toISOString()}`);
+
+  const userQuery = 'SELECT * FROM users WHERE id = $1 AND archived_at IS NULL';
+  const userQueryResult = await pool.query(userQuery, [userId]);
+  const user = userQueryResult.rows[0];
+  const hashedOldPassword = await bcrypt.hash(oldPassword, 10);
+  if (!user || !(await bcrypt.compare(oldPassword, user.password))) {
+    return res.status(400).send('Invalid credentials');
+  }
+
+  const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+  const query = 'UPDATE users SET password = $1 WHERE id = $2';
+  const result = await pool.query(query, [hashedNewPassword, userId]);
+  if (!result) {
+    return res.status(500).send('Some error has occurred');
+  }
+  res.send('Password changed successfully');
+};
+
 export const login = async (username: string, password: string) => {
   const query = 'SELECT users.*, roles.role FROM users left join roles on users.role_id = roles.id WHERE username = $1 AND archived_at IS NULL';
   const result = await pool.query(query, [username.toLocaleLowerCase()]);

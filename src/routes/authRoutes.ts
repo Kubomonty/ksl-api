@@ -1,8 +1,10 @@
-import { createAdmin, login, requestPasswordReset, resetPassword } from '../middleware/authorization.js';
+import { changePasswordReq, createAdmin, login, requestPasswordReset, resetPassword } from '../middleware/authorization.js';
 import { authenticate, authorizeAdmin } from '../middleware/authorization.js';
 import { Router } from 'express';
 
 const router = Router();
+
+router.put('/change-password', authenticate, changePasswordReq);
 
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
