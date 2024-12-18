@@ -1,8 +1,74 @@
-import { CreateMatchRequestBodyDto, MatchDto, MatchDetailsDto, MatchUpdateDto } from '../models/index.js';
+import { CreateMatchRequestBodyDto, MatchDto, MatchDetailsDto, MatchUpdateDto, CreateOvertimeRequestDto, UpdateOvertimeRequestDto } from '../models/index.js';
 import { Request, Response } from 'express';
 import { MatchStatus } from '../enums/MatchStatus.enum.js';
 import pool from '../config/db.js';
 import { v4 as uuidv4 } from 'uuid';
+
+export const createMatchOvertimeReq = async (req: Request<{}, {}, CreateOvertimeRequestDto>, res: Response): Promise<void> => {
+  const {
+    createdAt, matchId, guest, home
+  } = req.body;
+  console.log(`Create new overtime for match ${matchId} at ${new Date().toISOString()}`);
+  if (
+    !createdAt ||
+    !matchId ||
+    !guest ||
+    !guest.pos1 ||
+    !guest.pos2 ||
+    !guest.pos3 ||
+    !guest.pos4 ||
+    guest.legs.m1 === undefined || guest.legs.m1 === null ||
+    guest.legs.m2 === undefined || guest.legs.m2 === null ||
+    guest.legs.m3 === undefined || guest.legs.m3 === null ||
+    guest.score === undefined || guest.score === null ||
+    !home ||
+    !home.pos1 ||
+    !home.pos2 ||
+    !home.pos3 ||
+    !home.pos4 ||
+    home.legs.m1 === undefined || home.legs.m1 === null ||
+    home.legs.m2 === undefined || home.legs.m2 === null ||
+    home.legs.m3 === undefined || home.legs.m3 === null ||
+    !home.legs.m2 ||
+    !home.legs.m3 ||
+    home.score === undefined || home.score === null
+  ) {
+    res.status(400).send('Overtime data is missing in the request');
+    return;
+  }
+
+  try {
+    const newOvertime = await createMatchOvertime({ createdAt, matchId, guest, home });
+    res.status(201).send({ message: 'New overtime created', overtimeId: newOvertime });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Some error has occurred');
+  }
+};
+const createMatchOvertime = async ({ createdAt, matchId, guest, home }: CreateOvertimeRequestDto): Promise<string> => {
+  const matchOvertimeQuery = `
+    INSERT INTO public.match_overtimes(
+      id, created_at, match_id,
+      guest_pos1, guest_pos2, guest_pos3, guest_pos4, guest_pos5, guest_pos6,
+      home_pos1, home_pos2, home_pos3, home_pos4, home_pos5, home_pos6,
+      guest_leg1, guest_leg2, guest_leg3, home_leg1, home_leg2, home_leg3, guest_score, home_score
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+    RETURNING id;
+  `;
+  const overtimeValues = [
+    uuidv4(), createdAt, matchId,
+    guest.pos1, guest.pos2, guest.pos3, guest.pos4, guest.pos5, guest.pos6,
+    home.pos1, home.pos2, home.pos3, home.pos4, home.pos5, home.pos6,
+    guest.legs.m1, guest.legs.m2, guest.legs.m3, home.legs.m1, home.legs.m2, home.legs.m3, guest.score, home.score
+  ];
+  const matchResult = await pool.query(matchOvertimeQuery, overtimeValues);
+  if (matchResult.rowCount === 0) {
+    throw new Error('Match overtime not created');
+  }
+
+  return matchResult.rows[0].id;
+}
 
 export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBodyDto>, res: Response): Promise<void> => {
   const {
@@ -129,7 +195,7 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
 
 export const getMatchesPageReq = async (req: Request, res: Response): Promise<void> => {
   const page: number = parseInt(req.query.page as string, 10) || 1;
-  const limit: number = parseInt(req.query.limit as string, 10) || 10;
+  const limit: number = parseInt(req.query.limit as string, 10) || 25;
   const offset = (page - 1) * limit;
   console.log(`Get matches page ${page} with limit ${limit} at ${new Date().toISOString()}`);
 
@@ -154,6 +220,18 @@ const getMatchesPage = async ({ limit, offset }: { limit: number, offset: number
   const values = [limit, offset];
 
   const result = await pool.query(query, values);
+  const countQuery = `
+    SELECT COUNT(*) AS total
+    FROM matches;
+  `;
+  const countResult = await pool.query(countQuery);
+  const totalMatches = parseInt(countResult.rows[0].total, 10);
+  const totalPages = Math.ceil(totalMatches / limit);
+
+  return {
+    matches: result.rows,
+    totalPages
+  };
   return result.rows;
 };
 
@@ -201,7 +279,15 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
       q4.home_pos5 AS home_pos5_q4, q4.home_pos6 AS home_pos6_q4, q4.home_pos7 AS home_pos7_q4, q4.home_pos8 AS home_pos8_q4,
       q4.guest_legs1 AS guest_legs_q4_1, q4.guest_legs2 AS guest_legs_q4_2, q4.guest_legs3 AS guest_legs_q4_3, q4.guest_legs4 AS guest_legs_q4_4,
       q4.home_legs1 AS home_legs_q4_1, q4.home_legs2 AS home_legs_q4_2, q4.home_legs3 AS home_legs_q4_3, q4.home_legs4 AS home_legs_q4_4,
-      q4.guest_score AS guest_score_q4, q4.home_score AS home_score_q4
+      q4.guest_score AS guest_score_q4, q4.home_score AS home_score_q4,
+      o.created_at AS overtime_created_at,
+      o.guest_pos1 AS guest_pos1_o, o.guest_pos2 AS guest_pos2_o, o.guest_pos3 AS guest_pos3_o,
+      o.guest_pos4 AS guest_pos4_o, o.guest_pos5 AS guest_pos5_o, o.guest_pos6 AS guest_pos6_o, 
+      o.home_pos1 AS home_pos1_o, o.home_pos2 AS home_pos2_o, o.home_pos3 AS home_pos3_o,
+      o.home_pos4 AS home_pos4_o, o.home_pos5 AS home_pos5_o, o.home_pos6 AS home_pos6_o,
+      o.guest_leg1 AS guest_leg1_o, o.guest_leg2 AS guest_leg2_o, o.guest_leg3 AS guest_leg3_o,
+      o.home_leg1 AS home_leg1_o, o.home_leg2 AS home_leg2_o, o.home_leg3 AS home_leg3_o,
+      o.guest_score AS guest_score_o, o.home_score AS home_score_o
     FROM matches AS m
     JOIN match_details AS q1
       ON m.id = q1.match_id
@@ -215,6 +301,8 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
     JOIN match_details AS q4
       ON m.id = q4.match_id
       AND q4.quarter = 4
+    LEFT JOIN match_overtimes AS o
+      ON m.id = o.match_id
     WHERE m.id = $1;
   `;
   const values = [matchId];
@@ -223,7 +311,7 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
   if (resultRows.rowCount === 0) {
     throw new Error(`Match ${matchId} not found`);
   }
-  const result = {
+  const result: MatchDetailsDto = {
     id: resultRows.rows[0].id,
     guestTeam: resultRows.rows[0].guest_team,
     guestCaptain: resultRows.rows[0].guest_captain,
@@ -380,6 +468,38 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
       }
     }
   };
+  if (resultRows.rows[0].overtime_created_at) {
+    result.overtime = {
+      guest: {
+        pos1: resultRows.rows[0].guest_pos1_o,
+        pos2: resultRows.rows[0].guest_pos2_o,
+        pos3: resultRows.rows[0].guest_pos3_o,
+        pos4: resultRows.rows[0].guest_pos4_o,
+        pos5: resultRows.rows[0].guest_pos5_o,
+        pos6: resultRows.rows[0].guest_pos6_o,
+        legs: {
+          m1: resultRows.rows[0].guest_leg1_o,
+          m2: resultRows.rows[0].guest_leg2_o,
+          m3: resultRows.rows[0].guest_leg3_o
+        },
+        score: resultRows.rows[0].guest_score_o
+      },
+      home: {
+        pos1: resultRows.rows[0].home_pos1_o,
+        pos2: resultRows.rows[0].home_pos2_o,
+        pos3: resultRows.rows[0].home_pos3_o,
+        pos4: resultRows.rows[0].home_pos4_o,
+        pos5: resultRows.rows[0].home_pos5_o,
+        pos6: resultRows.rows[0].home_pos6_o,
+        legs: {
+          m1: resultRows.rows[0].home_leg1_o,
+          m2: resultRows.rows[0].home_leg2_o,
+          m3: resultRows.rows[0].home_leg3_o
+        },
+        score: resultRows.rows[0].home_score_o
+      }
+    };
+  }
   return result;
 };
 
@@ -473,5 +593,43 @@ const updateMatch = async (matchUpdate: MatchUpdateDto): Promise<void> => {
   const q4Result = await pool.query(quarterQuery, q4Values);
   if (q4Result.rowCount === 0) {
     throw new Error('Match details Q4 not updated');
+  }
+};
+
+export const updateMatchOvertimeReq = async (req: Request, res: Response): Promise<void> => {
+  const matchOvertimeUpdate: CreateOvertimeRequestDto = req.body;
+  console.log(`Update match ${matchOvertimeUpdate.matchId} overtime at ${new Date().toISOString()}`);
+
+  try {
+    await updateMatchOvertime(matchOvertimeUpdate);
+    res.status(200).send('Match overtime updated');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Some error has occurred');
+  }
+};
+const updateMatchOvertime = async (matchOvertimeUpdate: UpdateOvertimeRequestDto): Promise<void> => {
+  const matchQuery = `
+    UPDATE public.match_overtimes
+    SET
+      guest_pos1=$2, guest_pos2=$3, guest_pos3=$4, guest_pos4=$5, guest_pos5=$6, guest_pos6=$7,
+      home_pos1=$8, home_pos2=$9, home_pos3=$10, home_pos4=$11, home_pos5=$12, home_pos6=$13,
+      guest_leg1=$14, guest_leg2=$15, guest_leg3=$16, home_leg1=$17, home_leg2=$18, home_leg3=$19, guest_score=$20, home_score=$21
+    WHERE match_id = $1;
+  `
+  const queryValues = [
+    matchOvertimeUpdate.matchId,
+    matchOvertimeUpdate.guest.pos1, matchOvertimeUpdate.guest.pos2, matchOvertimeUpdate.guest.pos3, matchOvertimeUpdate.guest.pos4,
+    matchOvertimeUpdate.guest.pos5, matchOvertimeUpdate.guest.pos6,
+    matchOvertimeUpdate.home.pos1, matchOvertimeUpdate.home.pos2, matchOvertimeUpdate.home.pos3, matchOvertimeUpdate.home.pos4,
+    matchOvertimeUpdate.home.pos5, matchOvertimeUpdate.home.pos6,
+    matchOvertimeUpdate.guest.legs.m1, matchOvertimeUpdate.guest.legs.m2, matchOvertimeUpdate.guest.legs.m3,
+    matchOvertimeUpdate.home.legs.m1, matchOvertimeUpdate.home.legs.m2, matchOvertimeUpdate.home.legs.m3,
+    matchOvertimeUpdate.guest.score, matchOvertimeUpdate.home.score
+  ];
+
+  const updateResult = await pool.query(matchQuery, queryValues);
+  if (updateResult.rowCount === 0) {
+    throw new Error('Match overtime not updated');
   }
 };
