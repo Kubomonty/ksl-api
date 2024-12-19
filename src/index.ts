@@ -11,7 +11,7 @@ const port = process.env.PORT || 8080;
 dotenv.config();
 
 const app = express();
-const allowedOrigins = ['https://ksl-ui.vercel.app', 'https://localhost:3000'];
+const allowedOrigins = ['https://ksl-ui.vercel.app', 'https://localhost:3000', 'http://localhost:3000', 'https://localhost:8081'];
 
 app.use(cors({
   origin: (origin, callback) => {

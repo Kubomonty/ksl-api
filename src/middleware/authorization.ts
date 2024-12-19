@@ -11,6 +11,7 @@ interface AdminRequestBody {
   role?: string;
 }
 
+const loginTokenValidity = '4h';
 const UI_URL = process.env.UI_URL || 'http://localhost:3000';
 const secret = process.env.JWT_SECRET || 'your_jwt_secret';
 const emailSecret = process.env.EMAIL_SECRET || 'your_email_secret';
@@ -174,8 +175,37 @@ export const login = async (username: string, password: string) => {
       throw new Error('Invalid credentials');
   }
 
-  const token = jwt.sign({ id: user.id, role: user.role_id }, secret, { expiresIn: '4h' });
+  const token = jwt.sign({ id: user.id, role: user.role_id }, secret, { expiresIn: loginTokenValidity });
   return { token, id: user.id, userEmail: user.user_email, userRole: user.role, teamName: user.team_name, username: user.username };
+};
+
+export const resetToken: RequestHandler = async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  const user = req.user;
+  console.log(`Reset token for user ${user?.id} at ${new Date().toISOString()}`);
+  if (!user || !token) {
+    return res.status(401).send('Access denied');
+  }
+  const query = `
+    SELECT *
+    FROM users
+    WHERE users.id = $1 AND users.archived_at IS NULL
+  `
+  const result = await pool.query(query, [user.id]);
+  const queryUser = result.rows[0];
+  if (!queryUser || !queryUser.id || !queryUser.role_id) {
+    return res.status(404).send('User not found');
+  }
+
+  try {
+    const decoded = jwt.verify(token, secret);
+    console.log('decoded token', decoded);
+    const newToken = jwt.sign({ id: queryUser.id, role: queryUser.role_id }, secret, { expiresIn: loginTokenValidity });
+    res.send({ token: newToken });
+  } catch (err) {
+    console.error(err);
+    res.status(400).send('Invalid token');
+  }
 };
 
 export const authenticate: RequestHandler = (req, res, next) => {
