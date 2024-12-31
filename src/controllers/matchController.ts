@@ -29,8 +29,6 @@ export const createMatchOvertimeReq = async (req: Request<{}, {}, CreateOvertime
     home.legs.m1 === undefined || home.legs.m1 === null ||
     home.legs.m2 === undefined || home.legs.m2 === null ||
     home.legs.m3 === undefined || home.legs.m3 === null ||
-    !home.legs.m2 ||
-    !home.legs.m3 ||
     home.score === undefined || home.score === null
   ) {
     res.status(400).send('Overtime data is missing in the request');
