@@ -23,6 +23,30 @@ interface TeamDto {
   teamEmail: string;
 }
 
+export const cancelTeamReq = async (req: Request, res: Response) => {
+  const teamId = req.params.id;
+  console.log(`Cancel team attempt for team ${teamId} at ${new Date().toISOString()}`);
+
+  try {
+    const cancelTeamResult = await cancelTeam(teamId);
+    if (!cancelTeamResult) {
+      res.status(500).send('Some error has occurred');
+      return;
+    }
+    res.status(200).send({ message: 'Team canceled' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Some error has occurred');
+  }
+};
+
+const cancelTeam = async (teamId: string): Promise<boolean> => {
+  const query = `UPDATE users SET archived_at = $1 WHERE id = $2`;
+  const result = await pool.query(query, [new Date(), teamId]);
+
+  return !!result.rowCount && result.rowCount > 0;
+};
+
 export const updateTeamReq = async (req: Request, res: Response) => {
   const { teamEmail, teamId, teamMembers, teamName } = req.body;
   console.log(`Update team attempt for team ${teamId} at ${new Date().toISOString()}`);
@@ -199,6 +223,55 @@ const getAllTeams = async (): Promise<TeamDto[] | undefined> => {
     FROM users AS t
     LEFT JOIN players AS p
       ON t.id = p.user_id
+    LEFT JOIN roles as r
+      ON t.role_id = r.id
+    WHERE r.role = 'USER'
+    ORDER BY t.team_name ASC, p.name ASC
+  `;
+  const result = await pool.query(query);
+  const teamsMap = new Map<string, TeamDto>();
+
+  result.rows.forEach(row => {
+    if (!teamsMap.has(row.team_id)) {
+      teamsMap.set(row.team_id, {
+        id: row.team_id,
+        teamName: row.team_name,
+        teamEmail: row.team_email,
+        players: [{ id: row.player_id, name: row.player_name }]
+      });
+    } else {
+      const team = teamsMap.get(row.team_id);
+      team!.players.push({ id: row.player_id, name: row.player_name });
+    }
+  });
+
+  return Array.from(teamsMap.values());
+};
+export const getAllActiveTeamsReq = async (_req: Request, res: Response) => {
+  console.log(`Get all teams attempt at ${new Date().toISOString()}`);
+  try {
+    const teams: TeamDto[] | undefined = await getAllActiveTeams();
+    if (!teams) {
+      res.status(500).send('Some error has occurred');
+      return;
+    }
+    res.status(200).send(teams);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Some error has occurred');
+  }
+};
+const getAllActiveTeams = async (): Promise<TeamDto[] | undefined> => {
+  const query = `
+    SELECT
+      t.id AS team_id,
+      t.team_name,
+      t.user_email AS team_email,
+      p.id AS player_id,
+      p.name AS player_name
+    FROM users AS t
+    LEFT JOIN players AS p
+      ON t.id = p.user_id
       AND p.archived_at IS NULL
     LEFT JOIN roles as r
       ON t.role_id = r.id
@@ -243,6 +316,52 @@ export const getTeamReq = async (req: Request, res: Response) => {
   }
 };
 const getTeam = async (teamId: string): Promise<TeamDto | undefined> => {
+  const query = `
+      SELECT
+        t.id AS team_id,
+        t.team_name,
+        t.user_email AS team_email,
+        p.id AS player_id,
+        p.name AS player_name
+      FROM users AS t
+      LEFT JOIN players AS p
+        ON t.id = p.user_id
+      LEFT JOIN roles as r
+        ON t.role_id = r.id
+      WHERE r.role = 'USER'
+        AND t.id = $1
+      ORDER BY p.name ASC`;
+  const result = await pool.query(query, [teamId]);
+  const team: TeamDto = {
+    id: result.rows[0].team_id,
+    players: [],
+    teamEmail: result.rows[0].team_email,
+    teamName: result.rows[0].team_name
+  };
+  result.rows.forEach(row => {
+    if (!row.player_id) return;
+    team.players.push({ id: row.player_id, name: row.player_name });
+  });
+
+  return team;
+};
+export const getActiveTeamReq = async (req: Request, res: Response) => {
+  const teamId = req.params.id;
+  console.log(`Get team attempt for team id ${teamId} at ${new Date().toISOString()}`);
+  try {
+    const team = await getActiveTeam(teamId);
+
+    if (!team || !team.id) {
+      return res.status(404).send({ message: 'Team not found' });
+    }
+
+    res.status(200).send(team);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Some error has occurred');
+  }
+};
+const getActiveTeam = async (teamId: string): Promise<TeamDto | undefined> => {
   const query = `
       SELECT
         t.id AS team_id,
