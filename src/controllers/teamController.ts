@@ -14,6 +14,7 @@ interface TeamRequestBody {
 interface PlayerDto {
   id: string;
   name: string;
+  playerOrder: number;
 }
 
 interface TeamDto {
@@ -62,7 +63,7 @@ export const updateTeamReq = async (req: Request, res: Response) => {
     res.status(500).send('Some error has occurred');
   }
 };
-const updateTeam = async (teamEmail: string, teamId: string, teamName: string, teamMembers?: {id: string, name: string}[]): Promise<boolean> => {
+const updateTeam = async (teamEmail: string, teamId: string, teamName: string, teamMembers?: {id: string, name: string, playerOrder: number}[]): Promise<boolean> => {
   const teamQuery = `
     Select u.id as team_id, u.team_name, u.user_email as team_email, p.id as player_id, p.name as player_name
     FROM users u
@@ -79,7 +80,7 @@ const updateTeam = async (teamEmail: string, teamId: string, teamName: string, t
   };
   result.rows.forEach(row => {
     if (!row.player_id) return;
-    team.players.push({ id: row.player_id, name: row.player_name });
+    team.players.push({ id: row.player_id, name: row.player_name, playerOrder: row.player_order });
   });
   if (!team.id) return false;
   if (teamEmail !== team.teamEmail) {
@@ -100,42 +101,48 @@ const updateTeam = async (teamEmail: string, teamId: string, teamName: string, t
   };
   if (teamMembers?.length) {
     const newMembers = teamMembers.filter(member => member.id.startsWith('NEW-')).map(member => {
-      return { id: uuidv4(), name: member.name, user_id: teamId };
+      return { id: uuidv4(), name: member.name, player_order: member.playerOrder, user_id: teamId };
     });
     if (newMembers.length) {
       const insertPlayerQuery = `
-        INSERT INTO players (id, name, user_id)
-        VALUES ${newMembers.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ')}
+        INSERT INTO players (id, name, user_id, player_order)
+        VALUES ${newMembers.map((_, i) => `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3}, $${i * 4 + 4})`).join(', ')}
       `;
-      const values = newMembers.flatMap(member => [member.id, member.name, member.user_id]);
+      const values = newMembers.flatMap(member => [member.id, member.name, member.user_id, member.player_order]);
       await pool.query(insertPlayerQuery, values);
     };
     const removedMembers = team.players.filter(player => !teamMembers.find(member => member.id === player.id));
     if (removedMembers.length) {
       const archivePlayersQuery = `
         UPDATE players
-        SET archived_at = $1
+        SET
+          archived_at = $1,
+          player_order = -1
         WHERE id = ANY($2::uuid[])
       `;
       const removedMemberIds = removedMembers.map(member => member.id);
       await pool.query(archivePlayersQuery, [new Date(), removedMemberIds]);
     };
-    const updatedMembers: { id: string, name: string }[] = [];
+    const updatedMembers: { id: string, name: string, playerOrder: number }[] = [];
     teamMembers.forEach(member => {
       const existingMember = team.players.find(player => player.id === member.id);
-      if (existingMember && existingMember.name !== member.name) {
-        updatedMembers.push({ id: member.id, name: member.name });
+      if (existingMember && (existingMember.name !== member.name || existingMember.playerOrder !== member.playerOrder)) {
+        updatedMembers.push({ id: member.id, name: member.name, playerOrder: member.playerOrder });
       };
     });
     if (updatedMembers.length) {
       const updatePlayersQuery = `
         UPDATE players
-        SET name = CASE id
-          ${updatedMembers.map((_, i) => `WHEN $${i * 2 + 1} THEN $${i * 2 + 2}`).join(' ')}
-        END
-        WHERE id IN (${updatedMembers.map((_, i) => `$${i * 2 + 1}`).join(', ')})
+        SET
+          name = CASE id
+            ${updatedMembers.map((_, i) => `WHEN $${i * 3 + 1} THEN $${i * 3 + 2}`).join(' ')}
+          END,
+          player_order = CASE id
+            ${updatedMembers.map((_, i) => `WHEN $${i * 3 + 1} THEN $${i * 3 + 3}::numeric`).join(' ')}
+          END
+        WHERE id IN (${updatedMembers.map((_, i) => `$${i * 3 + 1}`).join(', ')})
       `;
-      const values = updatedMembers.flatMap(member => [member.id, member.name]);
+      const values = updatedMembers.flatMap(member => [member.id, member.name, member.playerOrder]);
       await pool.query(updatePlayersQuery, values);
     };
   };
@@ -190,8 +197,8 @@ const createTeam = async (teamEmail: string, teamName: string, username: string,
 
   if (teamMembers?.length) {
     const membersCreated: string[] = []
-    teamMembers.forEach(async (member) => {
-      const createdMember = await createPlayer(member, result.rows[0].id);
+    teamMembers.forEach(async (member, index) => {
+      const createdMember = await createPlayer(member, index, result.rows[0].id);
       createdMember && membersCreated.push(createdMember.id);
     });
   }
@@ -219,14 +226,15 @@ const getAllTeams = async (): Promise<TeamDto[] | undefined> => {
       t.team_name,
       t.user_email AS team_email,
       p.id AS player_id,
-      p.name AS player_name
+      p.name AS player_name,
+      p.player_order::numeric
     FROM users AS t
     LEFT JOIN players AS p
       ON t.id = p.user_id
     LEFT JOIN roles as r
       ON t.role_id = r.id
     WHERE r.role = 'USER'
-    ORDER BY t.team_name ASC, p.name ASC
+    ORDER BY t.team_name ASC, p.player_order ASC
   `;
   const result = await pool.query(query);
   const teamsMap = new Map<string, TeamDto>();
@@ -237,11 +245,11 @@ const getAllTeams = async (): Promise<TeamDto[] | undefined> => {
         id: row.team_id,
         teamName: row.team_name,
         teamEmail: row.team_email,
-        players: [{ id: row.player_id, name: row.player_name }]
+        players: [{ id: row.player_id, name: row.player_name, playerOrder: +row.player_order }]
       });
     } else {
       const team = teamsMap.get(row.team_id);
-      team!.players.push({ id: row.player_id, name: row.player_name });
+      team!.players.push({ id: row.player_id, name: row.player_name, playerOrder: +row.player_order });
     }
   });
 
@@ -268,7 +276,8 @@ const getAllActiveTeams = async (): Promise<TeamDto[] | undefined> => {
       t.team_name,
       t.user_email AS team_email,
       p.id AS player_id,
-      p.name AS player_name
+      p.name AS player_name,
+      p.player_order::numeric
     FROM users AS t
     LEFT JOIN players AS p
       ON t.id = p.user_id
@@ -277,7 +286,7 @@ const getAllActiveTeams = async (): Promise<TeamDto[] | undefined> => {
       ON t.role_id = r.id
     WHERE t.archived_at IS NULL
       AND r.role = 'USER'
-    ORDER BY t.team_name ASC, p.name ASC
+    ORDER BY t.team_name ASC, p.player_order ASC
   `;
   const result = await pool.query(query);
   const teamsMap = new Map<string, TeamDto>();
@@ -288,11 +297,11 @@ const getAllActiveTeams = async (): Promise<TeamDto[] | undefined> => {
         id: row.team_id,
         teamName: row.team_name,
         teamEmail: row.team_email,
-        players: [{ id: row.player_id, name: row.player_name }]
+        players: [{ id: row.player_id, name: row.player_name, playerOrder: +row.player_order }]
       });
     } else {
       const team = teamsMap.get(row.team_id);
-      team!.players.push({ id: row.player_id, name: row.player_name });
+      team!.players.push({ id: row.player_id, name: row.player_name, playerOrder: +row.player_order });
     }
   });
 
@@ -322,7 +331,8 @@ const getTeam = async (teamId: string): Promise<TeamDto | undefined> => {
         t.team_name,
         t.user_email AS team_email,
         p.id AS player_id,
-        p.name AS player_name
+        p.name AS player_name,
+        p.player_order::numeric
       FROM users AS t
       LEFT JOIN players AS p
         ON t.id = p.user_id
@@ -330,7 +340,7 @@ const getTeam = async (teamId: string): Promise<TeamDto | undefined> => {
         ON t.role_id = r.id
       WHERE r.role = 'USER'
         AND t.id = $1
-      ORDER BY p.name ASC`;
+      ORDER BY p.player_order ASC`;
   const result = await pool.query(query, [teamId]);
   const team: TeamDto = {
     id: result.rows[0].team_id,
@@ -340,7 +350,7 @@ const getTeam = async (teamId: string): Promise<TeamDto | undefined> => {
   };
   result.rows.forEach(row => {
     if (!row.player_id) return;
-    team.players.push({ id: row.player_id, name: row.player_name });
+    team.players.push({ id: row.player_id, name: row.player_name, playerOrder: +row.player_order });
   });
 
   return team;
@@ -368,7 +378,8 @@ const getActiveTeam = async (teamId: string): Promise<TeamDto | undefined> => {
         t.team_name,
         t.user_email AS team_email,
         p.id AS player_id,
-        p.name AS player_name
+        p.name AS player_name,
+        p.player_order::numeric
       FROM users AS t
       LEFT JOIN players AS p
         ON t.id = p.user_id
@@ -378,7 +389,7 @@ const getActiveTeam = async (teamId: string): Promise<TeamDto | undefined> => {
       WHERE t.archived_at IS NULL
         AND r.role = 'USER'
         AND t.id = $1
-      ORDER BY p.name ASC`;
+      ORDER BY p.player_order ASC`;
   const result = await pool.query(query, [teamId]);
   const team: TeamDto = {
     id: result.rows[0].team_id,
@@ -388,7 +399,7 @@ const getActiveTeam = async (teamId: string): Promise<TeamDto | undefined> => {
   };
   result.rows.forEach(row => {
     if (!row.player_id) return;
-    team.players.push({ id: row.player_id, name: row.player_name });
+    team.players.push({ id: row.player_id, name: row.player_name, playerOrder: +row.player_order });
   });
 
   return team;
