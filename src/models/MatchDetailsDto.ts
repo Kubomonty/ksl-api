@@ -7,6 +7,7 @@ export interface MatchDetailsDto {
   matchLocation: string;
   matchDate: Date;
   createdAt: Date;
+  createdBy: string;
   status: string;
   quarters: {
     q1: {
