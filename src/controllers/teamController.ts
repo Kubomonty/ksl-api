@@ -570,15 +570,16 @@ const getTeamsStandings = async () => {
         retObj.gamesLost += match.guest_score ?? 0;
         if ((match.home_score ?? 0) > (match.guest_score ?? 0)) {
           retObj.wins++;
-          retObj.points += 2;
+          retObj.points += 3;
         } else if ((match.home_score ?? 0) < (match.guest_score ?? 0)) {
           retObj.losses++;
         }
         else if ((match.home_overtime_score ?? 0) > (match.guest_overtime_score ?? 0)) {
           retObj.overTimeWins++;
-          retObj.points += 1;
+          retObj.points += 2;
         } else if ((match.home_overtime_score ?? 0) < (match.guest_overtime_score ?? 0)){
           retObj.overTimeLosses++;
+          retObj.points += 1;
         }
       } else {
         retObj.legsWon += match.guest_legs;
@@ -587,15 +588,16 @@ const getTeamsStandings = async () => {
         retObj.gamesLost += match.home_score ?? 0;
         if ((match.guest_score ?? 0) > (match.home_score ?? 0)) {
           retObj.wins++;
-          retObj.points += 2;
+          retObj.points += 3;
         } else if ((match.guest_score ?? 0) < (match.home_score ?? 0)) {
           retObj.losses++;
         }
         else if ((match.guest_overtime_score ?? 0) > (match.home_overtime_score ?? 0)) {
           retObj.overTimeWins++;
-          retObj.points += 1;
+          retObj.points += 2;
         } else if ((match.guest_overtime_score ?? 0) < (match.home_overtime_score ?? 0)){
           retObj.overTimeLosses++;
+          retObj.points += 1;
         }
       }
       retObj.matchesPlayed++;
