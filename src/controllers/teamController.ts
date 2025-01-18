@@ -508,7 +508,6 @@ const getTeamsStandings = async () => {
       } else {
         team.matches[team.matches.length - 1].home_legs += +row.home_legs;
         team.matches[team.matches.length - 1].guest_legs += +row.guest_legs;
-        console.log('team.matches q2-4', team.matches);
       }
       if (+row.quarter === 4) {
         team.matches[team.matches.length - 1].home_score = +row.home_score;
@@ -516,7 +515,6 @@ const getTeamsStandings = async () => {
       }
     }
   });
-  console.log('teamsMap', teamsMap);
   const resultArray = Array.from(teamsMap.values()).map((teamStats: TeamStatsDto) => {
     const retObj: {
       place?: number;
