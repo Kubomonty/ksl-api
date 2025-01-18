@@ -5,6 +5,7 @@ import {
   getAllActiveTeamsReq,
   getAllTeamsReq,
   getTeamReq,
+  getTeamStandingsReq,
   isTeamUsernameUniqueReq,
   updateTeamReq
 } from '../controllers/teamController.js';
@@ -16,6 +17,7 @@ const router = express.Router();
 router.get('/team/is-unique/:username', isTeamUsernameUniqueReq);
 router.get('/team/active/:id', getActiveTeamReq);
 router.get('/team/active', getAllActiveTeamsReq);
+router.get('/team/standings', getTeamStandingsReq);
 router.get('/team/:id', getTeamReq);
 router.put('/team/:id', authenticate, updateTeamReq);
 router.delete('/team/:id', authenticate, authorizeAdmin, cancelTeamReq);

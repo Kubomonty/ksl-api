@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { MatchStatus } from '../enums/MatchStatus.enum.js';
 import { createPlayer } from './playerController.js';
 import pool from '../config/db.js';
 import { requestPasswordCreate } from '../middleware/authorization.js';
@@ -22,6 +23,27 @@ interface TeamDto {
   id: string;
   teamName: string;
   teamEmail: string;
+}
+
+interface MatchDto {
+  match_date: string;
+  home_team: string;
+  home_team_name: string;
+  guest_team: string;
+  guest_team_name: string;
+  match_location: string;
+  home_legs: number;
+  guest_legs: number;
+  home_score?: number;
+  guest_score?: number;
+  home_overtime_score?: number;
+  guest_overtime_score?: number;
+}
+
+interface TeamStatsDto {
+  team_id: string;
+  team_name: string;
+  matches: MatchDto[];
 }
 
 export const cancelTeamReq = async (req: Request, res: Response) => {
@@ -403,6 +425,217 @@ const getActiveTeam = async (teamId: string): Promise<TeamDto | undefined> => {
   });
 
   return team;
+};
+
+export const getTeamStandingsReq = async (_req: Request, res: Response) => {
+  console.log(`Get team standings attempt at ${new Date().toISOString()}`);
+  try {
+    const standings = await getTeamsStandings();
+    if (!standings) {
+      res.status(500).send('Some error has occurred');
+      return;
+    }
+    res.status(200).send(standings);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Some error has occurred');
+  }
+};
+const getTeamsStandings = async () => {
+  const query = `
+    SELECT
+      t.id AS team_id,
+      t.team_name,
+      m.status,
+      m.id as match_id,
+      m.match_date,
+      m.home_team,
+      ht.team_name AS home_team_name,
+      m.guest_team,
+      gt.team_name AS guest_team_name,
+      m.match_location,
+      md.home_score,
+      md.guest_score,
+      COALESCE(md.home_legs1, 0) + COALESCE(md.home_legs2, 0) + COALESCE(md.home_legs3, 0) + COALESCE(md.home_legs4, 0) AS home_legs,
+      COALESCE(md.guest_legs1, 0) + COALESCE(md.guest_legs2, 0) + COALESCE(md.guest_legs3, 0) + COALESCE(md.guest_legs4, 0) AS guest_legs,
+      md.quarter,
+      mo.home_score AS home_overtime_score,
+      mo.guest_score AS guest_overtime_score
+    FROM users AS t
+    JOIN roles AS r
+      ON t.role_id = r.id
+      AND r.role = 'USER'
+    LEFT JOIN matches AS m
+      ON t.id = m.home_team OR t.id = m.guest_team
+    LEFT JOIN users AS ht
+      ON m.home_team = ht.id
+    LEFT JOIN users AS gt
+      ON m.guest_team = gt.id
+    LEFT JOIN match_details as md
+      ON m.id = md.match_id
+    LEFT JOIN match_overtimes as mo
+      ON m.id = mo.match_id
+    WHERE t.archived_at IS NULL
+    ORDER BY t.id ASC, m.match_date DESC, m.id ASC, md.quarter ASC
+  `;
+  const result = await pool.query(query);
+  const rows = result.rows;
+  const teamsMap = new Map();
+  rows.forEach(row => {
+    if (!teamsMap.has(row.team_id)) {
+      teamsMap.set(row.team_id, {
+        team_id: row.team_id,
+        team_name: row.team_name,
+        matches: []
+      });
+    }
+    const team = teamsMap.get(row.team_id);
+    if (row.status === MatchStatus.FINISHED) {
+      if (+row.quarter === 1) {
+        team.matches.push({
+          match_date: row.match_date,
+          home_team: row.home_team,
+          home_team_name: row.home_team_name,
+          guest_team: row.guest_team,
+          guest_team_name: row.guest_team_name,
+          match_location: row.match_location,
+          home_legs: +row.home_legs,
+          guest_legs: +row.guest_legs,
+          quarter: +row.quarter,
+          home_overtime_score: +row.home_overtime_score,
+          guest_overtime_score: +row.guest_overtime_score
+        });
+      } else {
+        team.matches[team.matches.length - 1].home_legs += +row.home_legs;
+        team.matches[team.matches.length - 1].guest_legs += +row.guest_legs;
+        console.log('team.matches q2-4', team.matches);
+      }
+      if (+row.quarter === 4) {
+        team.matches[team.matches.length - 1].home_score = +row.home_score;
+        team.matches[team.matches.length - 1].guest_score = +row.guest_score;
+      }
+    }
+  });
+  console.log('teamsMap', teamsMap);
+  const resultArray = Array.from(teamsMap.values()).map((teamStats: TeamStatsDto) => {
+    const retObj: {
+      place?: number;
+      teamId: string;
+      teamName: string;
+      matchesPlayed: number;
+      points: number;
+      wins: number;
+      losses: number;
+      overTimeWins: number;
+      overTimeLosses: number;
+      legsWon: number;
+      legsLost: number;
+      gamesWon: number;
+      gamesLost: number;
+      matches: {
+        matchDate: string;
+        homeTeam: string;
+        homeTeamName: string;
+        guestTeam: string;
+        guestTeamName: string;
+        matchLocation: string;
+        homeLegs: number;
+        guestLegs: number;
+        homeScore?: number;
+        guestScore?: number;
+        homeOvertimeScore?: number;
+        guestOvertimeScore?: number;
+      }[];
+    } = {
+      teamId: teamStats.team_id,
+      teamName: teamStats.team_name,
+      matchesPlayed: 0,
+      points: 0,
+      wins: 0,
+      losses: 0,
+      overTimeWins: 0,
+      overTimeLosses: 0,
+      legsWon: 0,
+      legsLost: 0,
+      gamesWon: 0,
+      gamesLost: 0,
+      matches: []
+    };
+
+    teamStats.matches.forEach(match => {
+      if (match.home_team === teamStats.team_id) {
+        retObj.legsWon += match.home_legs;
+        retObj.legsLost += match.guest_legs;
+        retObj.gamesWon += match.home_score ?? 0;
+        retObj.gamesLost += match.guest_score ?? 0;
+        if ((match.home_score ?? 0) > (match.guest_score ?? 0)) {
+          retObj.wins++;
+          retObj.points += 2;
+        } else if ((match.home_score ?? 0) < (match.guest_score ?? 0)) {
+          retObj.losses++;
+        }
+        else if ((match.home_overtime_score ?? 0) > (match.guest_overtime_score ?? 0)) {
+          retObj.overTimeWins++;
+          retObj.points += 1;
+        } else if ((match.home_overtime_score ?? 0) < (match.guest_overtime_score ?? 0)){
+          retObj.overTimeLosses++;
+        }
+      } else {
+        retObj.legsWon += match.guest_legs;
+        retObj.legsLost += match.home_legs;
+        retObj.gamesWon += match.guest_score ?? 0;
+        retObj.gamesLost += match.home_score ?? 0;
+        if ((match.guest_score ?? 0) > (match.home_score ?? 0)) {
+          retObj.wins++;
+          retObj.points += 2;
+        } else if ((match.guest_score ?? 0) < (match.home_score ?? 0)) {
+          retObj.losses++;
+        }
+        else if ((match.guest_overtime_score ?? 0) > (match.home_overtime_score ?? 0)) {
+          retObj.overTimeWins++;
+          retObj.points += 1;
+        } else if ((match.guest_overtime_score ?? 0) < (match.home_overtime_score ?? 0)){
+          retObj.overTimeLosses++;
+        }
+      }
+      retObj.matchesPlayed++;
+      retObj.matches.push({
+        matchDate: match.match_date,
+        homeTeam: match.home_team,
+        homeTeamName: match.home_team_name,
+        guestTeam: match.guest_team,
+        guestTeamName: match.guest_team_name,
+        matchLocation: match.match_location,
+        homeLegs: match.home_legs,
+        guestLegs: match.guest_legs,
+        homeScore: match.home_score,
+        guestScore: match.guest_score,
+        homeOvertimeScore: match.home_overtime_score,
+        guestOvertimeScore: match.guest_overtime_score
+      });
+    });
+
+    return retObj;
+  });
+
+  resultArray.sort((a, b) => {
+    if (b.points !== a.points) {
+      return b.points - a.points;
+    } else if (b.wins !== a.wins) {
+      return b.wins - a.wins;
+    } else if (b.legsWon !== a.legsWon) {
+      return b.legsWon - a.legsWon;
+    } else {
+      return a.teamName.localeCompare(b.teamName);
+    }
+  });
+
+  // Assign place property
+  resultArray.forEach((team, index) => {
+    team.place = index + 1;
+  });
+
+  return resultArray;
 };
 
 export const isTeamUsernameUniqueReq = async (req: Request, res: Response) => {
