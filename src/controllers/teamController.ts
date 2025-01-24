@@ -23,6 +23,7 @@ interface TeamDto {
   id: string;
   teamName: string;
   teamEmail: string;
+  username?: string;
 }
 
 interface MatchDto {
@@ -399,6 +400,7 @@ const getActiveTeam = async (teamId: string): Promise<TeamDto | undefined> => {
         t.id AS team_id,
         t.team_name,
         t.user_email AS team_email,
+        t.username AS username,
         p.id AS player_id,
         p.name AS player_name,
         p.player_order::numeric
@@ -417,7 +419,8 @@ const getActiveTeam = async (teamId: string): Promise<TeamDto | undefined> => {
     id: result.rows[0].team_id,
     players: [],
     teamEmail: result.rows[0].team_email,
-    teamName: result.rows[0].team_name
+    teamName: result.rows[0].team_name,
+    username: result.rows[0].username
   };
   result.rows.forEach(row => {
     if (!row.player_id) return;
