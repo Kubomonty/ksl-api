@@ -72,10 +72,10 @@ const cancelTeam = async (teamId: string): Promise<boolean> => {
 };
 
 export const updateTeamReq = async (req: Request, res: Response) => {
-  const { teamEmail, teamId, teamMembers, teamName } = req.body;
+  const { teamEmail, teamId, teamMembers, teamName, username } = req.body;
   console.log(`Update team attempt for team ${teamId} at ${new Date().toISOString()}`);
   try {
-    const updateTeamResult = await updateTeam(teamEmail.toLowerCase(), teamId, teamName, teamMembers);
+    const updateTeamResult = await updateTeam({ teamEmail: teamEmail.toLowerCase(), teamId, teamName, teamMembers, username });
     if (!updateTeamResult) {
       res.status(500).send('Some error has occurred');
       return;
@@ -86,9 +86,16 @@ export const updateTeamReq = async (req: Request, res: Response) => {
     res.status(500).send('Some error has occurred');
   }
 };
-const updateTeam = async (teamEmail: string, teamId: string, teamName: string, teamMembers?: {id: string, name: string, playerOrder: number}[]): Promise<boolean> => {
+const updateTeam = async (attrs: {
+  teamEmail: string,
+  teamId: string,
+  teamName: string,
+  teamMembers?: {id: string, name: string, playerOrder: number}[],
+  username?: string,
+}): Promise<boolean> => {
+  const { teamEmail, teamId, teamName, teamMembers, username } = attrs;
   const teamQuery = `
-    Select u.id as team_id, u.team_name, u.user_email as team_email, p.id as player_id, p.name as player_name
+    Select u.id as team_id, u.team_name, u.user_email as team_email, u.username, p.id as player_id, p.name as player_name
     FROM users u
     LEFT JOIN players p
       ON u.id = p.user_id
@@ -99,7 +106,8 @@ const updateTeam = async (teamEmail: string, teamId: string, teamName: string, t
     id: result.rows[0].team_id,
     players: [],
     teamEmail: result.rows[0].team_email,
-    teamName: result.rows[0].team_name
+    teamName: result.rows[0].team_name,
+    username: result.rows[0].username
   };
   result.rows.forEach(row => {
     if (!row.player_id) return;
@@ -121,6 +129,14 @@ const updateTeam = async (teamEmail: string, teamId: string, teamName: string, t
       WHERE id = $2
     `;
     await pool.query(updateNameQuery, [teamName, teamId]);
+  };
+  if (username && username !== team.username) {
+    const updateUsernameQuery = `
+      UPDATE users
+      SET username = $1
+      WHERE id = $2
+    `;
+    await pool.query(updateUsernameQuery, [username, teamId]);
   };
   if (teamMembers?.length) {
     const newMembers = teamMembers.filter(member => member.id.startsWith('NEW-')).map(member => {
