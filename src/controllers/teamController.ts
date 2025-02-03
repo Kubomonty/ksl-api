@@ -545,6 +545,8 @@ const getTeamsStandings = async () => {
       losses: number;
       overTimeWins: number;
       overTimeLosses: number;
+      overTimeLegsWon: number;
+      overTimeLegsLost: number;
       legsWon: number;
       legsLost: number;
       gamesWon: number;
@@ -572,6 +574,8 @@ const getTeamsStandings = async () => {
       losses: 0,
       overTimeWins: 0,
       overTimeLosses: 0,
+      overTimeLegsWon: 0,
+      overTimeLegsLost: 0,
       legsWon: 0,
       legsLost: 0,
       gamesWon: 0,
@@ -585,6 +589,8 @@ const getTeamsStandings = async () => {
         retObj.legsLost += match.guest_legs;
         retObj.gamesWon += match.home_score ?? 0;
         retObj.gamesLost += match.guest_score ?? 0;
+        retObj.overTimeLegsWon += match.home_overtime_score ?? 0;
+        retObj.overTimeLegsLost += match.guest_overtime_score ?? 0;
         if ((match.home_score ?? 0) > (match.guest_score ?? 0)) {
           retObj.wins++;
           retObj.points += 3;
@@ -603,6 +609,8 @@ const getTeamsStandings = async () => {
         retObj.legsLost += match.home_legs;
         retObj.gamesWon += match.guest_score ?? 0;
         retObj.gamesLost += match.home_score ?? 0;
+        retObj.overTimeLegsWon += match.guest_overtime_score ?? 0;
+        retObj.overTimeLegsLost += match.home_overtime_score ?? 0;
         if ((match.guest_score ?? 0) > (match.home_score ?? 0)) {
           retObj.wins++;
           retObj.points += 3;
