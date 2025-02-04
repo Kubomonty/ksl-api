@@ -195,17 +195,23 @@ export const getMatchesPageReq = async (req: Request, res: Response): Promise<vo
   const page: number = parseInt(req.query.page as string, 10) || 1;
   const limit: number = parseInt(req.query.limit as string, 10) || 25;
   const offset = (page - 1) * limit;
+  const filter: MatchStatus[] = req.query.filter ? (req.query.filter as string).split(',') as MatchStatus[] : [
+    MatchStatus.NEW,
+    MatchStatus.IN_PROGRESS,
+    MatchStatus.FINISHED,
+    MatchStatus.CANCELLED
+  ];
   console.log(`Get matches page ${page} with limit ${limit} at ${new Date().toISOString()}`);
 
   try {
-    const matches = await getMatchesPage({ limit, offset });
+    const matches = await getMatchesPage({ filter, limit, offset });
     res.status(200).send(matches);
   } catch (err) {
     console.error(err);
     res.status(500).send('Some error has occurred');
   }
 };
-const getMatchesPage = async ({ limit, offset }: { limit: number, offset: number }) => {
+const getMatchesPage = async ({ filter, limit, offset }: { filter: MatchStatus[], limit: number, offset: number }) => {
   const query = `
     SELECT m.*, d.guest_score, d.home_score, o.guest_score AS guest_score_o, o.home_score AS home_score_o
     FROM matches AS m
@@ -214,17 +220,19 @@ const getMatchesPage = async ({ limit, offset }: { limit: number, offset: number
       AND d.quarter = 4
     LEFT JOIN match_overtimes AS o
       ON m.id = o.match_id
+    WHERE m.status = ANY($3)
     ORDER BY match_date DESC, created_at DESC
     LIMIT $1 OFFSET $2;
   `;
-  const values = [limit, offset];
+  const values = [limit, offset, filter];
 
   const result = await pool.query(query, values);
   const countQuery = `
     SELECT COUNT(*) AS total
-    FROM matches;
+    FROM matches
+    WHERE status = ANY($1);
   `;
-  const countResult = await pool.query(countQuery);
+  const countResult = await pool.query(countQuery, [filter]);
   const totalMatches = parseInt(countResult.rows[0].total, 10);
   const totalPages = Math.ceil(totalMatches / limit);
 
