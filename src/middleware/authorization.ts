@@ -199,7 +199,6 @@ export const resetToken: RequestHandler = async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, secret);
-    console.log('decoded token', decoded);
     const newToken = jwt.sign({ id: queryUser.id, role: queryUser.role_id }, secret, { expiresIn: loginTokenValidity });
     res.send({ token: newToken });
   } catch (err) {

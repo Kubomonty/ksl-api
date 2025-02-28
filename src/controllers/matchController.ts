@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { MatchStatus } from '../enums/MatchStatus.enum.js';
 import pool from '../config/db.js';
 import { v4 as uuidv4 } from 'uuid';
+import { getActiveSeasonId } from './seasonController.js';
 
 export const createMatchOvertimeReq = async (req: Request<{}, {}, CreateOvertimeRequestDto>, res: Response): Promise<void> => {
   const {
@@ -111,13 +112,14 @@ export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody
 const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, guestPos1, guestPos2, guestPos3,
   guestPos4, guestPos5, guestPos6, guestPos7, guestPos8, homeTeam, homeCaptain, homePos1, homePos2, homePos3, homePos4,
   homePos5, homePos6, homePos7, homePos8, matchLocation, matchDate }: CreateMatchRequestBodyDto): Promise<MatchDto> => {
+  const currentSeasonId = await getActiveSeasonId();
   const matchQuery = `
-    INSERT INTO matches (id, created_at, created_by, guest_team, guest_captain, home_team, home_captain, match_location, match_date, status)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    INSERT INTO matches (id, created_at, created_by, guest_team, guest_captain, home_team, home_captain, match_location, match_date, status, season)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING id;
   `;
   const matchValues = [
-    uuidv4(), createdAt, createdBy, guestTeam, guestCaptain, homeTeam, homeCaptain, matchLocation, matchDate, MatchStatus.NEW
+    uuidv4(), createdAt, createdBy, guestTeam, guestCaptain, homeTeam, homeCaptain, matchLocation, matchDate, MatchStatus.NEW, currentSeasonId
   ];
   const matchResult = await pool.query(matchQuery, matchValues);
   if (matchResult.rowCount === 0) {
@@ -212,6 +214,7 @@ export const getMatchesPageReq = async (req: Request, res: Response): Promise<vo
   }
 };
 const getMatchesPage = async ({ filter, limit, offset }: { filter: MatchStatus[], limit: number, offset: number }) => {
+  const currentSeasonId = await getActiveSeasonId();
   const query = `
     SELECT m.*, d.guest_score, d.home_score, o.guest_score AS guest_score_o, o.home_score AS home_score_o
     FROM matches AS m
@@ -221,10 +224,11 @@ const getMatchesPage = async ({ filter, limit, offset }: { filter: MatchStatus[]
     LEFT JOIN match_overtimes AS o
       ON m.id = o.match_id
     WHERE m.status = ANY($3)
+      AND m.season = $4
     ORDER BY match_date DESC, created_at DESC
     LIMIT $1 OFFSET $2;
   `;
-  const values = [limit, offset, filter];
+  const values = [limit, offset, filter, currentSeasonId];
 
   const result = await pool.query(query, values);
   const countQuery = `
