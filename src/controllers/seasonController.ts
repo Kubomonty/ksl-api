@@ -11,7 +11,7 @@ interface SeasonDto {
 }
 
 export const createSeasonReq = async (req: Request, res: Response): Promise<void> => {
-  const { name, createdBy } = req.body;
+  const { createdBy, isActive, name } = req.body;
   console.log(`Create new season ${name} at ${new Date().toISOString()}`);
   if (!name || !createdBy) {
     res.status(400).send('Season data is missing in the request');
@@ -19,20 +19,23 @@ export const createSeasonReq = async (req: Request, res: Response): Promise<void
   }
 
   try {
-    const newSeason = await createSeason({ name, createdBy });
+    const newSeason = await createSeason({ createdBy, isActive, name });
     res.status(201).send({ message: 'New season created', seasonId: newSeason.id });
   } catch (err) {
     console.error(err);
     res.status(500).send('Some error has occurred');
   }
 };
-const createSeason = async ({ name, createdBy }: { name: string, createdBy: string }) => {
+const createSeason = async ({ createdBy, isActive, name }: { createdBy: string, isActive: boolean, name: string }) => {
   const query = `INSERT INTO seasons (id, name, created_at, created_by, is_active)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING id;
   `;
   const values = [uuidv4(), name, new Date(), createdBy, false];
   const result = await pool.query(query, values);
+  if (isActive) {
+    setActiveSeason(values[0] as string);
+  }
   return result.rows[0];
 };
 

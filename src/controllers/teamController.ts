@@ -4,6 +4,7 @@ import { createPlayer } from './playerController.js';
 import pool from '../config/db.js';
 import { requestPasswordCreate } from '../middleware/authorization.js';
 import { v4 as uuidv4 } from 'uuid';
+import { getActiveSeasonId } from './seasonController.js';
 
 interface TeamRequestBody {
   teamEmail: string;
@@ -448,8 +449,9 @@ const getActiveTeam = async (teamId: string): Promise<TeamDto | undefined> => {
 
 export const getTeamStandingsReq = async (_req: Request, res: Response) => {
   console.log(`Get team standings attempt at ${new Date().toISOString()}`);
+  const currentSeasonId = await getActiveSeasonId();
   try {
-    const standings = await getTeamsStandings();
+    const standings = await getTeamsStandings(currentSeasonId);
     if (!standings) {
       res.status(500).send('Some error has occurred');
       return;
@@ -460,7 +462,7 @@ export const getTeamStandingsReq = async (_req: Request, res: Response) => {
     res.status(500).send('Some error has occurred');
   }
 };
-const getTeamsStandings = async () => {
+const getTeamsStandings = async (seasonId: string) => {
   const query = `
     SELECT
       t.id AS team_id,
@@ -485,7 +487,8 @@ const getTeamsStandings = async () => {
       ON t.role_id = r.id
       AND r.role = 'USER'
     LEFT JOIN matches AS m
-      ON t.id = m.home_team OR t.id = m.guest_team
+      ON (t.id = m.home_team OR t.id = m.guest_team)
+      AND m.season = $1
     LEFT JOIN users AS ht
       ON m.home_team = ht.id
     LEFT JOIN users AS gt
@@ -497,7 +500,8 @@ const getTeamsStandings = async () => {
     WHERE t.archived_at IS NULL
     ORDER BY t.id ASC, m.match_date DESC, m.id ASC, md.quarter ASC
   `;
-  const result = await pool.query(query);
+  const values = [seasonId];
+  const result = await pool.query(query, values);
   const rows = result.rows;
   const teamsMap = new Map();
   rows.forEach(row => {
