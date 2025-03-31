@@ -91,14 +91,54 @@ export const requestPasswordCreate = async (userId: string): Promise<boolean> =>
   return true;
 };
 
-export const requestPasswordReset: RequestHandler = async (req, res) => {
+export const resetPasswordPrecheckReq: RequestHandler = async (req, res): Promise<void> => {
+  const email = req.query.email;
+  console.log(`Reset password precheck for ${email} at ${new Date().toISOString()}`);
+  if (!email || typeof email !== 'string') {
+    res.status(400).send('Email is missing in the data');
+    return;
+  }
+  try {
+    const usernames = await getUsernamesForEmail(email);
+    res.status(200).send(usernames);
+  } catch (err) {
+    res.status(500).send('Some error has occurred');
+  }
+};
+
+const getUsernamesForEmail = async (email: string): Promise<string[]> => {
+  const query = 'SELECT DISTINCT username FROM users WHERE user_email = $1 AND archived_at IS NULL';
+  const values = [email.toLowerCase()];
+
+  const result = await pool.query(query, values);
+  const returnArray = result.rows.map((row: { username: string }) => row.username);
+  console.log('returnArray', returnArray);
+  if (returnArray.length === 1) {
+    const resetResult = await requestPasswordReset(email, returnArray[0]);
+  }
+  return returnArray;
+};
+
+export const requestPasswordResetReq: RequestHandler = async (req, res) => {
   const { email, username } = req.body;
+  const requestResult = await requestPasswordReset(email, username);
+  if (requestResult === 'e404') {
+    return res.status(404).send('User not found');
+  } else if (requestResult === 'e500') {
+    return res.status(500).send('Error sending email');
+  } else {
+    res.status(200).send('Password reset email sent');
+  }
+};
+
+const requestPasswordReset = async (email: string, username: string): Promise<string | void> => {
+  console.log(`Password reset request for ${email} at ${new Date().toISOString()}`);
   const query = 'SELECT * FROM users WHERE user_email = $1 AND username = $2 AND archived_at IS NULL';
   const result = await pool.query(query, [email.toLowerCase(), username.toLocaleLowerCase()]);
   const user = result.rows[0];
 
   if (!user) {
-    return res.status(404).send('User not found');
+    return 'e404';
   }
 
   const resetToken = jwt.sign({ id: user.id }, emailSecret, { expiresIn: '12h' });
@@ -122,11 +162,10 @@ export const requestPasswordReset: RequestHandler = async (req, res) => {
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.error(error);
-      return res.status(500).send('Error sending email');
+      return 'e500';
     }
-    res.send('Password reset email sent');
   });
-};
+}
 
 export const resetPassword: RequestHandler = async (req, res) => {
   const { token, newPassword } = req.body;
