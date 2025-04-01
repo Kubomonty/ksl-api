@@ -72,6 +72,35 @@ const cancelTeam = async (teamId: string): Promise<boolean> => {
   return !!result.rowCount && result.rowCount > 0;
 };
 
+export const updateTeamOrderReq = async (req: Request, res: Response) => {
+  const { teamId, teamMembers } = req.body;
+  console.log(`Update team order attempt for team ${teamId} at ${new Date().toISOString()}`);
+  try {
+    const updateTeamOrderResult = await updateTeamOrder(teamId, teamMembers);
+    if (!updateTeamOrderResult) {
+      res.status(500).send('Some error has occurred');
+      return;
+    }
+    res.status(200).send({ message: 'Team order updated' });
+  }
+  catch (err) {
+    console.error(err);
+    res.status(500).send('Some error has occurred');
+  }
+};
+const updateTeamOrder = async (teamId: string, teamMembers: {id: string, name: string, playerOrder: number}[]): Promise<boolean> => {
+  const query = `
+    UPDATE players
+    SET player_order = $1
+    WHERE id = $2 AND user_id = $3
+  `;
+  if (!teamMembers.length) return true;
+  teamMembers.forEach(async member => {
+    await pool.query(query, [member.playerOrder, member.id, teamId]);
+  });
+  return true;
+};
+
 export const updateTeamReq = async (req: Request, res: Response) => {
   const { teamEmail, teamId, teamMembers, teamName, username } = req.body;
   console.log(`Update team attempt for team ${teamId} at ${new Date().toISOString()}`);
