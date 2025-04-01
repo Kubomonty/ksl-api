@@ -107,7 +107,7 @@ export const resetPasswordPrecheckReq: RequestHandler = async (req, res): Promis
 };
 
 const getUsernamesForEmail = async (email: string): Promise<string[]> => {
-  const query = 'SELECT DISTINCT username FROM users WHERE user_email = $1 AND archived_at IS NULL';
+  const query = 'SELECT DISTINCT username FROM users WHERE LOWER(user_email) = LOWER($1) AND archived_at IS NULL';
   const values = [email.toLowerCase()];
 
   const result = await pool.query(query, values);
@@ -133,8 +133,8 @@ export const requestPasswordResetReq: RequestHandler = async (req, res) => {
 
 const requestPasswordReset = async (email: string, username: string): Promise<string | void> => {
   console.log(`Password reset request for ${email} at ${new Date().toISOString()}`);
-  const query = 'SELECT * FROM users WHERE user_email = $1 AND username = $2 AND archived_at IS NULL';
-  const result = await pool.query(query, [email.toLowerCase(), username.toLocaleLowerCase()]);
+  const query = 'SELECT * FROM users WHERE LOWER(user_email) = LOWER($1) AND LOWER(username) = LOWER($2) AND archived_at IS NULL';
+  const result = await pool.query(query, [email, username]);
   const user = result.rows[0];
 
   if (!user) {
@@ -204,8 +204,8 @@ export const changePasswordReq: RequestHandler = async (req, res) => {
 };
 
 export const login = async (username: string, password: string) => {
-  const query = 'SELECT users.*, roles.role FROM users left join roles on users.role_id = roles.id WHERE username = $1 AND archived_at IS NULL';
-  const result = await pool.query(query, [username.toLocaleLowerCase()]);
+  const query = 'SELECT users.*, roles.role FROM users left join roles on users.role_id = roles.id WHERE LOWER(username) = LOWER($1) AND archived_at IS NULL';
+  const result = await pool.query(query, [username]);
 
   const user = result.rows[0];
   const hashedPassword = await bcrypt.hash(password, 10);
