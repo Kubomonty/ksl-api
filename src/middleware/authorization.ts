@@ -209,9 +209,12 @@ export const login = async (username: string, password: string) => {
 
   const user = result.rows[0];
   const hashedPassword = await bcrypt.hash(password, 10);
+  const pwdCheckResult = await bcrypt.compare(password, user.password)
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new Error('Invalid credentials');
+  if (!user || !pwdCheckResult) {
+    if (!user) { console.log('invalid username'); }
+    if (pwdCheckResult) { console.log('invalid password'); }
+    throw new Error('Invalid credentials');
   }
 
   const token = jwt.sign({ id: user.id, role: user.role_id }, secret, { expiresIn: loginTokenValidity });
