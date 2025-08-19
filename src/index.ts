@@ -12,11 +12,15 @@ dotenv.config();
 const port = process.env.PORT || 8080;
 const app = express();
 
-// Povolit vsetky originy a logovat ich
+const allowedOrigins = ['http://91.98.112.7'];
 app.use(cors({
   origin: (origin, callback) => {
     console.log('Request origin:', origin);
-    callback(null, true); // povoli vsetko
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   methods: 'GET,POST,PUT,DELETE',
 }));
