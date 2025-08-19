@@ -8,24 +8,29 @@ import playerRoutes from './routes/playerRoutes.js';
 import seasonRoutes from './routes/seasonRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
 
-const port = process.env.PORT || 8080;
 dotenv.config();
+const port = process.env.PORT || 8080;
 
 const app = express();
+
 const allowedOrigins = [
   'https://ksl-ui.vercel.app',
   'https://localhost:3000',
   'http://localhost:3000',
-  'https://localhost:8081',
-  'http://91.98.112.7',
-  'https://91.98.112.7',
-  'http://91.98.112.7:80',
-  'https://91.98.112.7:80'
 ];
 
+// Flexibilné CORS middleware
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    console.log('Request origin:', origin); // for debug
+    if (!origin) return callback(null, true); // for curl / Postman
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.startsWith('http://localhost') ||
+      origin.startsWith('https://localhost') ||
+      origin.startsWith('http://91.98.112.7') ||
+      origin.startsWith('https://91.98.112.7')
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -46,6 +51,7 @@ app.use('/api/protected', authenticate, (req, res) => {
   res.send('This is a protected route');
 });
 
+// Error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
