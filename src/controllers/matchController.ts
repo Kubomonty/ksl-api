@@ -234,9 +234,10 @@ const getMatchesPage = async ({ filter, limit, offset }: { filter: MatchStatus[]
   const countQuery = `
     SELECT COUNT(*) AS total
     FROM matches
-    WHERE status = ANY($1);
+    WHERE status = ANY($1)
+      AND season = $2;
   `;
-  const countResult = await pool.query(countQuery, [filter]);
+  const countResult = await pool.query(countQuery, [filter, currentSeasonId]);
   const totalMatches = parseInt(countResult.rows[0].total, 10);
   const totalPages = Math.ceil(totalMatches / limit);
 
