@@ -148,8 +148,6 @@ const requestPasswordReset = async (email: string, username: string): Promise<st
     text: `Kliknite na odkaz a obnovte si heslo: ${resetLink}`,
   };
 
-  console.log('transporter: ', transporter);
-
   transporter.verify(function(error, success) {
     if (error) {
           console.error('Connection error:', error)
