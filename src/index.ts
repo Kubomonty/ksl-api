@@ -17,20 +17,12 @@ const allowedOrigins = [
   'https://ksl-ui.vercel.app',
   'https://localhost:3000',
   'http://localhost:3000',
+  'https://localhost:8081'
 ];
 
-// Flexibilné CORS middleware
 app.use(cors({
   origin: (origin, callback) => {
-    console.log('Request origin:', origin); // for debug
-    if (!origin) return callback(null, true); // for curl / Postman
-    if (
-      allowedOrigins.includes(origin) ||
-      origin.startsWith('http://localhost') ||
-      origin.startsWith('https://localhost') ||
-      origin.startsWith('http://91.98.112.7') ||
-      origin.startsWith('https://91.98.112.7')
-    ) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
