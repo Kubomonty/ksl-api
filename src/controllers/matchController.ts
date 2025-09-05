@@ -14,19 +14,13 @@ export const createMatchOvertimeReq = async (req: Request<{}, {}, CreateOvertime
     !createdAt ||
     !matchId ||
     !guest ||
-    !guest.pos1 ||
-    !guest.pos2 ||
-    !guest.pos3 ||
-    !guest.pos4 ||
+    [guest.pos1, guest.pos2, guest.pos3, guest.pos4].filter(pos => pos).length < 3 ||
     guest.legs.m1 === undefined || guest.legs.m1 === null ||
     guest.legs.m2 === undefined || guest.legs.m2 === null ||
     guest.legs.m3 === undefined || guest.legs.m3 === null ||
     guest.score === undefined || guest.score === null ||
     !home ||
-    !home.pos1 ||
-    !home.pos2 ||
-    !home.pos3 ||
-    !home.pos4 ||
+    [home.pos1, home.pos2, home.pos3, home.pos4].filter(pos => pos).length < 3 ||
     home.legs.m1 === undefined || home.legs.m1 === null ||
     home.legs.m2 === undefined || home.legs.m2 === null ||
     home.legs.m3 === undefined || home.legs.m3 === null ||
@@ -55,12 +49,13 @@ const createMatchOvertime = async ({ createdAt, matchId, guest, home }: CreateOv
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
     RETURNING id;
   `;
-  const overtimeValues = [
+  const overtimeValuesBase = [
     uuidv4(), createdAt, matchId,
-    guest.pos1, guest.pos2, guest.pos3, guest.pos4, guest.pos5, guest.pos6,
-    home.pos1, home.pos2, home.pos3, home.pos4, home.pos5, home.pos6,
+    guest.pos1 ?? null, guest.pos2 ?? null, guest.pos3 ?? null, guest.pos4 ?? null, guest.pos5 ?? null, guest.pos6 ?? null,
+    home.pos1 ?? null, home.pos2 ?? null, home.pos3 ?? null, home.pos4 ?? null, home.pos5 ?? null, home.pos6 ?? null,
     guest.legs.m1, guest.legs.m2, guest.legs.m3, home.legs.m1, home.legs.m2, home.legs.m3, guest.score, home.score
   ];
+  const overtimeValues = overtimeValuesBase.map(val => val === '' ? null : val);
   const matchResult = await pool.query(matchOvertimeQuery, overtimeValues);
   if (matchResult.rowCount === 0) {
     throw new Error('Match overtime not created');
