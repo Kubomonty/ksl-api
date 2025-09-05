@@ -237,11 +237,12 @@ const getMatchesPage = async ({ filter, limit, offset }: { filter: MatchStatus[]
   const totalMatches = parseInt(countResult.rows[0].total, 10);
   const totalPages = Math.ceil(totalMatches / limit);
 
+  console.log(`Total matches: ${totalMatches}, Total pages: ${totalPages}`);
+
   return {
     matches: result.rows,
     totalPages
   };
-  return result.rows;
 };
 
 export const getMatchDetailsReq = async (req: Request, res: Response): Promise<void> => {
