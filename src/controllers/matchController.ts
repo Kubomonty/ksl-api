@@ -56,6 +56,7 @@ const createMatchOvertime = async ({ createdAt, matchId, guest, home }: CreateOv
     guest.legs.m1, guest.legs.m2, guest.legs.m3, home.legs.m1, home.legs.m2, home.legs.m3, guest.score, home.score
   ];
   const overtimeValues = overtimeValuesBase.map(val => val === '' ? null : val);
+  console.log('overtimeValues:', overtimeValues);
   const matchResult = await pool.query(matchOvertimeQuery, overtimeValues);
   if (matchResult.rowCount === 0) {
     throw new Error('Match overtime not created');

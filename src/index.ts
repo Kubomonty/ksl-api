@@ -12,7 +12,7 @@ dotenv.config();
 const port = process.env.PORT || 8080;
 const app = express();
 
-const allowedOrigins = ['http://91.98.112.7', 'https://91.98.112.7', 'https://kesl.sk', 'https://www.kesl.sk'];
+const allowedOrigins = ['http://localhost:3000', 'https://localhost:3000', 'http://91.98.112.7', 'https://91.98.112.7', 'https://kesl.sk', 'https://www.kesl.sk'];
 app.use(cors({
   origin: (origin, callback) => {
     console.log('Request origin:', origin);
