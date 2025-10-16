@@ -10,7 +10,7 @@ export const createMatchOvertimeReq = async (req: Request<{}, {}, CreateOvertime
   const {
     createdAt, matchId, guest, home
   } = req.body;
-  console.log(`Create new overtime for match ${matchId} at ${new Date().toISOString()}`);
+  console.log(`${new Date().toISOString()} - Create new overtime for match ${matchId}`);
   if (
     !createdAt ||
     !matchId ||
@@ -35,7 +35,7 @@ export const createMatchOvertimeReq = async (req: Request<{}, {}, CreateOvertime
     const newOvertime = await createMatchOvertime({ createdAt, matchId, guest, home });
     res.status(201).send({ message: '✅ New overtime created', overtimeId: newOvertime });
   } catch (err) {
-    console.error(err);
+    console.error(`${new Date().toISOString()} - Error in createMatchOvertimeReq:`, err);
     res.status(500).send('❌ Some error has occurred');
   }
 };
@@ -57,7 +57,7 @@ const createMatchOvertime = async ({ createdAt, matchId, guest, home }: CreateOv
     guest.legs.m1, guest.legs.m2, guest.legs.m3, home.legs.m1, home.legs.m2, home.legs.m3, guest.score, home.score
   ];
   const overtimeValues = overtimeValuesBase.map(val => val === '' ? null : val);
-  console.log('overtimeValues:', overtimeValues);
+  console.log(`${new Date().toISOString()} - overtimeValues:`, overtimeValues);
   const matchResult = await pool.query(matchOvertimeQuery, overtimeValues);
   if (matchResult.rowCount === 0) {
     throw new Error('Match overtime not created');
@@ -75,7 +75,7 @@ export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody
     homePos4, homePos5, homePos6, homePos7, homePos8,
     matchLocation, matchDate
   } = req.body;
-  console.log(`Create new match attempt for ${homeTeam} vs. ${guestTeam} at ${new Date().toISOString()} by ${createdBy}`);
+  console.log(`${new Date().toISOString()} - Create new match attempt for ${homeTeam} vs. ${guestTeam} by ${createdBy}`);
   if (
     !createdAt ||
     !createdBy ||
@@ -103,12 +103,12 @@ export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody
     res.status(201).send({ message: 'New match created', matchId: newMatch.id });
 
     // After creating a new match, create and upload a backup
-    console.log("New match created — triggering backup...");
+    console.log(`${new Date().toISOString()} - New match created — triggering backup...`);
     createAndUploadBackup()
-      .then(() => console.log("✅ DB backup completed and uploaded"))
-      .catch((err: Error) => console.error("❌ Backup failed:", err));
+      .then(() => console.log(`${new Date().toISOString()} - ✅ DB backup completed and uploaded`))
+      .catch((err: Error) => console.error(`${new Date().toISOString()} - ❌ Backup failed:`, err));
   } catch (err) {
-    console.error(err);
+    console.error(`${new Date().toISOString()} - Error in createMatchReq:`, err);
     res.status(500).send('❌ Some error has occurred');
   }
 };
@@ -206,13 +206,13 @@ export const getMatchesPageReq = async (req: Request, res: Response): Promise<vo
     MatchStatus.FINISHED,
     MatchStatus.CANCELLED
   ];
-  console.log(`Get matches page ${page} with limit ${limit} at ${new Date().toISOString()}`);
+  console.log(`${new Date().toISOString()} - Get matches page ${page} with limit ${limit}`);
 
   try {
     const matches = await getMatchesPage({ filter, limit, offset });
     res.status(200).send(matches);
   } catch (err) {
-    console.error(err);
+    console.error(`${new Date().toISOString()} - Error in getMatchesPageReq:`, err);
     res.status(500).send('❌ Some error has occurred');
   }
 };
@@ -252,13 +252,13 @@ const getMatchesPage = async ({ filter, limit, offset }: { filter: MatchStatus[]
 
 export const getMatchDetailsReq = async (req: Request, res: Response): Promise<void> => {
   const matchId = req.params.id;
-  console.log(`Get match details for match ${matchId} at ${new Date().toISOString()}`);
+  console.log(`${new Date().toISOString()} - Get match details for match ${matchId}`);
 
   try {
     const matchDetails: MatchDetailsDto = await getMatchDetails(matchId);
     res.status(200).send(matchDetails);
   } catch (err) {
-    console.error(err);
+    console.error(`${new Date().toISOString()} - Error in getMatchDetailsReq:`, err);
     res.status(500).send('❌ Some error has occurred');
   }
 };
@@ -526,13 +526,13 @@ export const reopenMatchReq = async (req: Request, res: Response): Promise<void>
     res.status(401).send('❌ Unauthorized');
     return;
   }
-  console.log(`Reopening match ${matchId} at ${new Date().toISOString()}`);
+  console.log(`${new Date().toISOString()} - Reopening match ${matchId}`);
 
   try {
     const matchDetails: MatchDetailsDto = await reopenMatch(matchId, userId);
     res.status(200).send(matchDetails);
   } catch (err) {
-    console.error(err);
+    console.error(`${new Date().toISOString()} - Error in reopenMatchReq:`, err);
     res.status(500).send('❌ Some error has occurred');
   }
 };
@@ -553,7 +553,7 @@ const reopenMatch = async (matchId: string, userId: string): Promise<MatchDetail
 
 export const updateMatchReq = async (req: Request, res: Response): Promise<void> => {
   const matchUpdate: MatchUpdateDto = req.body;
-  console.log(`Update match ${matchUpdate.id} at ${new Date().toISOString()} by ${matchUpdate.statusChangedBy}`);
+  console.log(`${new Date().toISOString()} - Update match ${matchUpdate.id} by ${matchUpdate.statusChangedBy}`);
   try {
     const currentMatchQuery = `
       SELECT status FROM matches WHERE id = $1;
@@ -566,13 +566,13 @@ export const updateMatchReq = async (req: Request, res: Response): Promise<void>
 
     // If match status changed, create and upload backup
     if (currentStatus !== matchUpdate.status && ([MatchStatus.FINISHED, MatchStatus.CANCELLED].includes(matchUpdate.status))) {
-      console.log("Match status changed — triggering backup...");
+      console.log(`${new Date().toISOString()} - Match status changed — triggering backup...`);
       createAndUploadBackup()
-        .then(() => console.log("✅ DB backup completed and uploaded"))
-        .catch((err: Error) => console.error("❌ Backup failed:", err));
+        .then(() => console.log(`${new Date().toISOString()} - ✅ DB backup completed and uploaded`))
+        .catch((err: Error) => console.error(`${new Date().toISOString()} - ❌ Backup failed:`, err));
     }
   } catch (err) {
-    console.error(err);
+    console.error(`${new Date().toISOString()} - Error in updateMatchReq:`, err);
     res.status(500).send('❌ Some error has occurred');
   }
 };
@@ -659,13 +659,13 @@ const updateMatch = async (matchUpdate: MatchUpdateDto): Promise<void> => {
 
 export const updateMatchOvertimeReq = async (req: Request, res: Response): Promise<void> => {
   const matchOvertimeUpdate: CreateOvertimeRequestDto = req.body;
-  console.log(`Update match ${matchOvertimeUpdate.matchId} overtime at ${new Date().toISOString()}`);
+  console.log(`${new Date().toISOString()} - Update match ${matchOvertimeUpdate.matchId} overtime`);
 
   try {
     await updateMatchOvertime(matchOvertimeUpdate);
     res.status(200).send('✅ Match overtime updated');
   } catch (err) {
-    console.error(err);
+    console.error(`${new Date().toISOString()} - Error in updateMatchOvertimeReq:`, err);
     res.status(500).send('❌ Some error has occurred');
   }
 };
