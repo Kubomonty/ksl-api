@@ -36,9 +36,6 @@ async function getDropboxAccessToken(): Promise<string> {
       },
     }
   );
-  if (response.status !== 200) {
-    throw new Error('❌ Failed to get Dropbox access token');
-  }
 
   return response.data.access_token;
 }
