@@ -4,6 +4,7 @@ import { MatchStatus } from '../enums/MatchStatus.enum.js';
 import pool from '../config/db.js';
 import { v4 as uuidv4 } from 'uuid';
 import { getActiveSeasonId } from './seasonController.js';
+import { createAndUploadBackup } from '../config/backup.js';
 
 export const createMatchOvertimeReq = async (req: Request<{}, {}, CreateOvertimeRequestDto>, res: Response): Promise<void> => {
   const {
@@ -26,16 +27,16 @@ export const createMatchOvertimeReq = async (req: Request<{}, {}, CreateOvertime
     home.legs.m3 === undefined || home.legs.m3 === null ||
     home.score === undefined || home.score === null
   ) {
-    res.status(400).send('Overtime data is missing in the request');
+    res.status(400).send('❌ Overtime data is missing in the request');
     return;
   }
 
   try {
     const newOvertime = await createMatchOvertime({ createdAt, matchId, guest, home });
-    res.status(201).send({ message: 'New overtime created', overtimeId: newOvertime });
+    res.status(201).send({ message: '✅ New overtime created', overtimeId: newOvertime });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Some error has occurred');
+    res.status(500).send('❌ Some error has occurred');
   }
 };
 const createMatchOvertime = async ({ createdAt, matchId, guest, home }: CreateOvertimeRequestDto): Promise<string> => {
@@ -74,7 +75,7 @@ export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody
     homePos4, homePos5, homePos6, homePos7, homePos8,
     matchLocation, matchDate
   } = req.body;
-  console.log(`Create new match attempt for ${homeTeam} vs. ${guestTeam} at ${new Date().toISOString()}`);
+  console.log(`Create new match attempt for ${homeTeam} vs. ${guestTeam} at ${new Date().toISOString()} by ${createdBy}`);
   if (
     !createdAt ||
     !createdBy ||
@@ -91,7 +92,7 @@ export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody
     !matchLocation ||
     !matchDate
   ) {
-    res.status(400).send('Match data is missing in the request');
+    res.status(400).send('❌ Match data is missing in the request');
     return;
   }
 
@@ -100,9 +101,15 @@ export const createMatchReq = async (req: Request<{}, {}, CreateMatchRequestBody
       guestPos4, guestPos5, guestPos6, guestPos7, guestPos8, homeTeam, homeCaptain, homePos1, homePos2, homePos3, homePos4,
       homePos5, homePos6, homePos7, homePos8, matchLocation, matchDate });
     res.status(201).send({ message: 'New match created', matchId: newMatch.id });
+
+    // After creating a new match, create and upload a backup
+    console.log("New match created — triggering backup...");
+    createAndUploadBackup()
+      .then(() => console.log("✅ DB backup completed and uploaded"))
+      .catch((err: Error) => console.error("❌ Backup failed:", err));
   } catch (err) {
     console.error(err);
-    res.status(500).send('Some error has occurred');
+    res.status(500).send('❌ Some error has occurred');
   }
 };
 const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, guestPos1, guestPos2, guestPos3,
@@ -119,7 +126,7 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
   ];
   const matchResult = await pool.query(matchQuery, matchValues);
   if (matchResult.rowCount === 0) {
-    throw new Error('Match not created');
+    throw new Error('❌ Match not created');
   }
 
   const matchDetailsQ1Query = `
@@ -135,7 +142,7 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
   ];
   const q1Result = await pool.query(matchDetailsQ1Query, matchDetailsQ1Values);
   if (q1Result.rowCount === 0) {
-    throw new Error('Match details Q1 not created');
+    throw new Error('❌ Match details Q1 not created');
   }
 
   const matchDetailsQ2Query = `
@@ -151,7 +158,7 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
   ];
   const q2Result = await pool.query(matchDetailsQ2Query, matchDetailsQ2Values);
   if (q2Result.rowCount === 0) {
-    throw new Error('Match details Q2 not created');
+    throw new Error('❌ Match details Q2 not created');
   }
 
   const matchDetailsQ3Query = `
@@ -167,7 +174,7 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
   ];
   const q3Result = await pool.query(matchDetailsQ3Query, matchDetailsQ3Values);
   if (q3Result.rowCount === 0) {
-    throw new Error('Match details Q3 not created');
+    throw new Error('❌ Match details Q3 not created');
   }
 
   const matchDetailsQ4Query = `
@@ -183,7 +190,7 @@ const createMatch = async ({ createdAt, createdBy, guestTeam, guestCaptain, gues
   ];
   const q4Result = await pool.query(matchDetailsQ4Query, matchDetailsQ4Values);
   if (q4Result.rowCount === 0) {
-    throw new Error('Match details Q4 not created');
+    throw new Error('❌ Match details Q4 not created');
   }
 
   return matchResult.rows[0];
@@ -206,7 +213,7 @@ export const getMatchesPageReq = async (req: Request, res: Response): Promise<vo
     res.status(200).send(matches);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Some error has occurred');
+    res.status(500).send('❌ Some error has occurred');
   }
 };
 const getMatchesPage = async ({ filter, limit, offset }: { filter: MatchStatus[], limit: number, offset: number }) => {
@@ -237,8 +244,6 @@ const getMatchesPage = async ({ filter, limit, offset }: { filter: MatchStatus[]
   const totalMatches = parseInt(countResult.rows[0].total, 10);
   const totalPages = Math.ceil(totalMatches / limit);
 
-  console.log(`Total matches: ${totalMatches}, Total pages: ${totalPages}`);
-
   return {
     matches: result.rows,
     totalPages
@@ -254,7 +259,7 @@ export const getMatchDetailsReq = async (req: Request, res: Response): Promise<v
     res.status(200).send(matchDetails);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Some error has occurred');
+    res.status(500).send('❌ Some error has occurred');
   }
 };
 const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
@@ -514,16 +519,61 @@ const getMatchDetails = async (matchId: string): Promise<MatchDetailsDto> => {
   return result;
 };
 
-export const updateMatchReq = async (req: Request, res: Response): Promise<void> => {
-  const matchUpdate: MatchUpdateDto = req.body;
-  console.log(`Update match ${matchUpdate.id} at ${new Date().toISOString()}`);
+export const reopenMatchReq = async (req: Request, res: Response): Promise<void> => {
+  const matchId = req.params.id;
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).send('❌ Unauthorized');
+    return;
+  }
+  console.log(`Reopening match ${matchId} at ${new Date().toISOString()}`);
 
   try {
-    await updateMatch(matchUpdate);
-    res.status(200).send('Match updated');
+    const matchDetails: MatchDetailsDto = await reopenMatch(matchId, userId);
+    res.status(200).send(matchDetails);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Some error has occurred');
+    res.status(500).send('❌ Some error has occurred');
+  }
+};
+const reopenMatch = async (matchId: string, userId: string): Promise<MatchDetailsDto> => {
+  const matchQuery = `
+    UPDATE matches
+    SET status = $2, status_changed_at = $3, status_changed_by = $4
+    WHERE id = $1;
+  `
+  const matchValues = [matchId, MatchStatus.IN_PROGRESS, new Date(), userId];
+  const matchResult = await pool.query(matchQuery, matchValues);
+  if (matchResult.rowCount === 0) {
+    throw new Error('❌ Match not updated');
+  }
+
+  return getMatchDetails(matchId);
+};
+
+export const updateMatchReq = async (req: Request, res: Response): Promise<void> => {
+  const matchUpdate: MatchUpdateDto = req.body;
+  console.log(`Update match ${matchUpdate.id} at ${new Date().toISOString()} by ${matchUpdate.statusChangedBy}`);
+  try {
+    const currentMatchQuery = `
+      SELECT status FROM matches WHERE id = $1;
+    `;
+    const currentResult = await pool.query(currentMatchQuery, [matchUpdate.id]);
+    const currentStatus = currentResult.rows[0].status;
+
+    await updateMatch(matchUpdate);
+    res.status(200).send('Match updated');
+
+    // If match status changed, create and upload backup
+    if (currentStatus !== matchUpdate.status && ([MatchStatus.FINISHED, MatchStatus.CANCELLED].includes(matchUpdate.status))) {
+      console.log("Match status changed — triggering backup...");
+      createAndUploadBackup()
+        .then(() => console.log("✅ DB backup completed and uploaded"))
+        .catch((err: Error) => console.error("❌ Backup failed:", err));
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('❌ Some error has occurred');
   }
 };
 const updateMatch = async (matchUpdate: MatchUpdateDto): Promise<void> => {
@@ -535,7 +585,7 @@ const updateMatch = async (matchUpdate: MatchUpdateDto): Promise<void> => {
   const matchValues = [matchUpdate.id, matchUpdate.status, matchUpdate.statusChangetAt, matchUpdate.statusChangedBy];
   const matchResult = await pool.query(matchQuery, matchValues);
   if (matchResult.rowCount === 0) {
-    throw new Error('Match not updated');
+    throw new Error('❌ Match not updated');
   }
 
   const quarterQuery = `
@@ -558,7 +608,7 @@ const updateMatch = async (matchUpdate: MatchUpdateDto): Promise<void> => {
   ];
   const q1Result = await pool.query(quarterQuery, q1Values);
   if (q1Result.rowCount === 0) {
-    throw new Error('Match details Q1 not updated');
+    throw new Error('❌ Match details Q1 not updated');
   }
 
   const q2Values = [
@@ -573,7 +623,7 @@ const updateMatch = async (matchUpdate: MatchUpdateDto): Promise<void> => {
   ];
   const q2Result = await pool.query(quarterQuery, q2Values);
   if (q2Result.rowCount === 0) {
-    throw new Error('Match details Q2 not updated');
+    throw new Error('❌ Match details Q2 not updated');
   }
 
   const q3Values = [
@@ -588,7 +638,7 @@ const updateMatch = async (matchUpdate: MatchUpdateDto): Promise<void> => {
   ];
   const q3Result = await pool.query(quarterQuery, q3Values);
   if (q3Result.rowCount === 0) {
-    throw new Error('Match details Q3 not updated');
+    throw new Error('❌ Match details Q3 not updated');
   }
 
   const q4Values = [
@@ -603,7 +653,7 @@ const updateMatch = async (matchUpdate: MatchUpdateDto): Promise<void> => {
   ];
   const q4Result = await pool.query(quarterQuery, q4Values);
   if (q4Result.rowCount === 0) {
-    throw new Error('Match details Q4 not updated');
+    throw new Error('❌ Match details Q4 not updated');
   }
 };
 
@@ -613,10 +663,10 @@ export const updateMatchOvertimeReq = async (req: Request, res: Response): Promi
 
   try {
     await updateMatchOvertime(matchOvertimeUpdate);
-    res.status(200).send('Match overtime updated');
+    res.status(200).send('✅ Match overtime updated');
   } catch (err) {
     console.error(err);
-    res.status(500).send('Some error has occurred');
+    res.status(500).send('❌ Some error has occurred');
   }
 };
 const updateMatchOvertime = async (matchOvertimeUpdate: UpdateOvertimeRequestDto): Promise<void> => {
@@ -641,6 +691,6 @@ const updateMatchOvertime = async (matchOvertimeUpdate: UpdateOvertimeRequestDto
 
   const updateResult = await pool.query(matchQuery, queryValues);
   if (updateResult.rowCount === 0) {
-    throw new Error('Match overtime not updated');
+    throw new Error('❌ Match overtime not updated');
   }
 };
