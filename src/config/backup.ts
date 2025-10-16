@@ -15,9 +15,9 @@ if (!fs.existsSync(backupDir)) {
  * Get a fresh Dropbox access token using the refresh token
  */
 async function getDropboxAccessToken(): Promise<string> {
-  const DROPBOX_APP_KEY = process.env.DROPBOX_APP_KEY!;
-  const DROPBOX_APP_SECRET = process.env.DROPBOX_APP_SECRET!;
-  const DROPBOX_REFRESH_TOKEN = process.env.DROPBOX_REFRESH_TOKEN!;
+  const DROPBOX_APP_KEY = process.env.DROPBOX_APP_KEY;
+  const DROPBOX_APP_SECRET = process.env.DROPBOX_APP_SECRET;
+  const DROPBOX_REFRESH_TOKEN = process.env.DROPBOX_REFRESH_TOKEN;
 
   if (!DROPBOX_APP_KEY || !DROPBOX_APP_SECRET || !DROPBOX_REFRESH_TOKEN) {
     throw new Error('Missing Dropbox credentials in .env');
