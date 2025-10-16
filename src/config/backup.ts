@@ -53,12 +53,12 @@ export async function createAndUploadBackup(): Promise<string> {
     });
 
     // Fail fast if spawn itself errors (command not found, permission issues, etc.)
+    let stderr = '';
     dumpProcess.on('error', (err: Error) => {
       stderr += err.message;
       reject(err);
     });
 
-    let stderr = '';
 
     dumpProcess.stderr.on('data', (data: Buffer) => {
       stderr += data.toString();
